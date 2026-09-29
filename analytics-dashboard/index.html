@@ -17,8 +17,8 @@
     .panel,.card { background:var(--card); border:1px solid var(--line); border-radius:1rem; box-shadow:0 14px 40px #272a6010; }
     .panel { margin-top:1.5rem; padding:1rem; }
     form { display:grid; grid-template-columns:repeat(2,1fr) auto; gap:.75rem; align-items:end; }
-    .auth-form { grid-template-columns:repeat(2,1fr); }
-    .auth-form button { grid-column:1/-1; }
+    .auth-form { grid-template-columns:1fr auto; }
+    .auth-form button { min-width:15rem; }
     .signed-in { display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; }
     label { display:grid; gap:.3rem; color:var(--muted); font-size:.85rem; font-weight:650; }
     input,button { min-height:2.75rem; border:1px solid #cbd2e3; border-radius:.6rem; padding:.6rem .75rem; font:inherit; }
@@ -51,7 +51,7 @@
 
   <section class="panel" aria-labelledby="auth-heading">
     <h2 id="auth-heading">Owner sign-in</h2>
-    <p class="hint">Sign in with the same QuaptureIQ email/password account used by the app. The dashboard uses only the public Supabase client configuration; it never contains a service-role key.</p>
+    <p class="hint">Continue with Google using the existing QuaptureIQ Supabase project. Google passwords are handled by Google and never enter this page. The dashboard uses only the public Supabase client configuration; it never contains a service-role key.</p>
     <form id="auth-form" class="auth-form">
       <label>Supabase project URL
         <input id="supabase-url" type="url" placeholder="https://your-project.supabase.co" autocomplete="url" required>
@@ -59,13 +59,7 @@
       <label>Supabase publishable key
         <input id="supabase-key" type="text" placeholder="Public client key" autocomplete="off" required>
       </label>
-      <label>Email
-        <input id="owner-email" type="email" autocomplete="username" required>
-      </label>
-      <label>Password
-        <input id="owner-password" type="password" autocomplete="current-password" required>
-      </label>
-      <button id="sign-in" type="submit">Sign in</button>
+      <button id="sign-in" type="submit">Continue with Google</button>
     </form>
     <div id="auth-status" class="status" role="status" aria-live="polite"></div>
   </section>
@@ -104,10 +98,13 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.10.3/dist/umd/supabase.min.js"></script>
 <script>
   const configured = window.QAPTURE_ANALYTICS_CONFIG || {};
+  const publicConfigStorageKey = 'qaptureiq-analytics-public-config';
+  let storedConfig = {};
+  try { storedConfig = JSON.parse(window.localStorage.getItem(publicConfigStorageKey) || '{}'); } catch (_) { storedConfig = {}; }
   const apiInput = document.querySelector('#api-base');
   if (configured.apiBaseUrl) apiInput.value = configured.apiBaseUrl;
-  if (configured.supabaseUrl) document.querySelector('#supabase-url').value = configured.supabaseUrl;
-  if (configured.supabasePublishableKey) document.querySelector('#supabase-key').value = configured.supabasePublishableKey;
+  document.querySelector('#supabase-url').value = configured.supabaseUrl || storedConfig.supabaseUrl || '';
+  document.querySelector('#supabase-key').value = configured.supabasePublishableKey || storedConfig.supabasePublishableKey || '';
   const authForm = document.querySelector('#auth-form');
   const authStatus = document.querySelector('#auth-status');
   const connection = document.querySelector('#connection');
@@ -139,7 +136,33 @@
     signedInAs.textContent = '';
     clearDashboard();
   }
+  function applySession(session) {
+    if (!session) { showSignedOut(); return; }
+    signedInAs.textContent = session.user && session.user.email ? 'Signed in as ' + session.user.email + '.' : 'Signed in.';
+    connection.hidden = false;
+  }
+  function initialiseAuthClient() {
+    const url = document.querySelector('#supabase-url').value.trim();
+    const key = document.querySelector('#supabase-key').value.trim();
+    if (!url || !key || !window.supabase) return null;
+    authClient = window.supabase.createClient(url, key, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+    });
+    authClient.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') showSignedOut();
+      else if (session && ['INITIAL_SESSION', 'SIGNED_IN', 'TOKEN_REFRESHED', 'USER_UPDATED'].includes(event)) applySession(session);
+    });
+    return authClient;
+  }
+  async function restoreSession() {
+    const client = authClient || initialiseAuthClient();
+    if (!client) return null;
+    const result = await client.auth.getSession();
+    applySession(result.data.session);
+    return result.data.session;
+  }
   async function currentSession() {
+    if (!authClient) await restoreSession();
     if (!authClient) return null;
     const result = await authClient.auth.getSession();
     return result.data.session;
@@ -148,18 +171,18 @@
     event.preventDefault();
     const url = document.querySelector('#supabase-url').value.trim();
     const key = document.querySelector('#supabase-key').value.trim();
-    const email = document.querySelector('#owner-email').value.trim();
-    const password = document.querySelector('#owner-password').value;
     const button = document.querySelector('#sign-in');
-    if (!url || !key || !email || !password) return;
-    button.disabled = true; authStatus.className = 'status'; authStatus.textContent = 'Signing in…';
+    if (!url || !key) return;
+    button.disabled = true; authStatus.className = 'status'; authStatus.textContent = 'Signing in with Google…';
     try {
-      authClient = window.supabase.createClient(url, key, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } });
-      const result = await authClient.auth.signInWithPassword({ email, password });
+      window.localStorage.setItem(publicConfigStorageKey, JSON.stringify({ supabaseUrl: url, supabasePublishableKey: key }));
+      authClient = authClient || initialiseAuthClient();
+      const result = await authClient.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: configured.redirectTo || window.location.href }
+      });
       if (result.error) throw result.error;
-      document.querySelector('#owner-password').value = '';
-      signedInAs.textContent = 'Signed in as ' + (result.data.user.email || 'owner') + '.';
-      connection.hidden = false; authStatus.textContent = 'Signed in.';
+      authStatus.textContent = 'Redirecting to Google…';
     } catch (error) {
       showSignedOut(); authStatus.className = 'status error'; authStatus.textContent = error instanceof Error ? error.message : 'Unable to sign in.';
     } finally { button.disabled = false; }
@@ -167,10 +190,16 @@
   document.querySelector('#sign-out').addEventListener('click', async () => {
     const button = document.querySelector('#sign-out');
     button.disabled = true;
-    try { if (authClient) await authClient.auth.signOut({ scope: 'local' }); }
-    finally {
-      document.querySelector('#owner-password').value = '';
-      showSignedOut(); authStatus.className = 'status'; authStatus.textContent = 'Signed out; dashboard data and local session cleared.'; button.disabled = false;
+    try {
+      if (authClient) {
+        const result = await authClient.auth.signOut({ scope: 'local' });
+        if (result.error) throw result.error;
+      }
+      showSignedOut(); authStatus.className = 'status'; authStatus.textContent = 'Signed out; dashboard data and local session cleared.';
+    } catch (error) {
+      authStatus.className = 'status error'; authStatus.textContent = error instanceof Error ? error.message : 'Unable to sign out.';
+    } finally {
+      button.disabled = false;
     }
   });
   form.addEventListener('submit', async (event) => {
@@ -199,6 +228,10 @@
     finally { button.disabled = false; }
   });
   showSignedOut();
+  restoreSession().catch((error) => {
+    authStatus.className = 'status error';
+    authStatus.textContent = error instanceof Error ? error.message : 'Unable to restore the Supabase session.';
+  });
 </script>
 </body>
 </html>
