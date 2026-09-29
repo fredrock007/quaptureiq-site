@@ -95,8 +95,30 @@
 
   <footer>Private owner dashboard. GitHub Pages contains no analytics data, credentials, or private API keys.</footer>
 </main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.10.3/dist/umd/supabase.min.js"></script>
 <script>
+  const supabaseLibrarySources = [
+    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.min.js',
+    'https://unpkg.com/@supabase/supabase-js@2.117.2/dist/umd/supabase.js'
+  ];
+  function loadSupabaseLibrary() {
+    return new Promise((resolve, reject) => {
+      const load = (index) => {
+        if (window.supabase && typeof window.supabase.createClient === 'function') return resolve(window.supabase);
+        if (index >= supabaseLibrarySources.length) {
+          reject(new Error('Google sign-in is temporarily unavailable. Check your connection and try again.'));
+          return;
+        }
+        const script = document.createElement('script');
+        script.src = supabaseLibrarySources[index];
+        script.async = false;
+        script.onload = () => load(index + 1);
+        script.onerror = () => load(index + 1);
+        document.head.appendChild(script);
+      };
+      load(0);
+    });
+  }
+  const supabaseLibraryReady = loadSupabaseLibrary();
   const configured = window.QAPTURE_ANALYTICS_CONFIG || {};
   const publicConfigStorageKey = 'qaptureiq-analytics-public-config';
   let storedConfig = {};
@@ -141,11 +163,20 @@
     signedInAs.textContent = session.user && session.user.email ? 'Signed in as ' + session.user.email + '.' : 'Signed in.';
     connection.hidden = false;
   }
-  function initialiseAuthClient() {
+  async function initialiseAuthClient() {
     const url = document.querySelector('#supabase-url').value.trim();
     const key = document.querySelector('#supabase-key').value.trim();
-    if (!url || !key || !window.supabase) return null;
-    authClient = window.supabase.createClient(url, key, {
+    if (!url || !key) return null;
+    let supabase;
+    try {
+      supabase = await supabaseLibraryReady;
+    } catch (error) {
+      throw new Error('Google sign-in is temporarily unavailable. Check your connection and try again.');
+    }
+    if (!supabase || typeof supabase.createClient !== 'function') {
+      throw new Error('Google sign-in is temporarily unavailable. Check your connection and try again.');
+    }
+    authClient = supabase.createClient(url, key, {
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
     });
     authClient.auth.onAuthStateChange((event, session) => {
@@ -155,16 +186,16 @@
     return authClient;
   }
   async function restoreSession() {
-    const client = authClient || initialiseAuthClient();
+    const client = authClient || await initialiseAuthClient();
     if (!client) return null;
     const result = await client.auth.getSession();
     applySession(result.data.session);
     return result.data.session;
   }
   async function currentSession() {
-    if (!authClient) await restoreSession();
-    if (!authClient) return null;
-    const result = await authClient.auth.getSession();
+    const client = authClient || await initialiseAuthClient();
+    if (!client) return null;
+    const result = await client.auth.getSession();
     return result.data.session;
   }
   authForm.addEventListener('submit', async (event) => {
@@ -176,7 +207,8 @@
     button.disabled = true; authStatus.className = 'status'; authStatus.textContent = 'Signing in with Google…';
     try {
       window.localStorage.setItem(publicConfigStorageKey, JSON.stringify({ supabaseUrl: url, supabasePublishableKey: key }));
-      authClient = authClient || initialiseAuthClient();
+      authClient = authClient || await initialiseAuthClient();
+      if (!authClient) throw new Error('Enter the Supabase project URL and publishable key to continue.');
       const result = await authClient.auth.signInWithOAuth({
         provider: 'google',
         options: { redirectTo: configured.redirectTo || window.location.href }
