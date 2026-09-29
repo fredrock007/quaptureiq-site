@@ -38,8 +38,11 @@
     th { color:var(--muted); font-size:.82rem; }
     .bar { height:.55rem; min-width:2px; border-radius:99px; background:linear-gradient(90deg,var(--violet),var(--cyan)); }
     .empty { color:var(--muted); padding:1rem 0; }
+    .comparison-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:1rem; margin-top:1.5rem; }
+    .comparison-grid .section { margin-top:0; }
+    .comparison-note { margin:.35rem 0 0; color:var(--muted); font-size:.82rem; }
     footer { margin-top:1.5rem; color:var(--muted); font-size:.85rem; }
-    @media (max-width:760px) { form,.grid { grid-template-columns:1fr 1fr; } form button { grid-column:1/-1; } .grid .card:last-child { grid-column:1/-1; } }
+    @media (max-width:760px) { form,.grid,.comparison-grid { grid-template-columns:1fr; } form button { grid-column:auto; } }
   </style>
 </head>
 <body>
@@ -91,7 +94,15 @@
     <section class="card section"><h2>Input source</h2><div id="sources" class="empty">No data in this window.</div></section>
     <section class="card section"><h2>Answer-next usage</h2><div id="next" class="empty">No data in this window.</div></section>
     <section class="card section"><h2>Normalized failure stages</h2><div id="failures" class="empty">No data in this window.</div></section>
-</section>
+    <section class="comparison-grid" aria-label="Product comparisons">
+      <section class="card section"><h2>Plan tier</h2><div id="comparison-plan" class="empty">No data in this window.</div><p class="comparison-note">University is not included because it is reserved, not an active entitlement.</p></section>
+      <section class="card section"><h2>Selected voice</h2><div id="comparison-voice" class="empty">No data in this window.</div></section>
+      <section class="card section"><h2>Image input</h2><div id="comparison-input" class="empty">No data in this window.</div></section>
+      <section class="card section"><h2>Entry route</h2><div id="comparison-route" class="empty">No data in this window.</div></section>
+      <section class="card section"><h2>Sign-in method</h2><div id="comparison-signin" class="empty">No data in this window.</div></section>
+      <section class="card section"><h2>User role</h2><div id="comparison-role" class="empty">No data recorded. The app does not currently record an explicit user-selected role.</div></section>
+    </section>
+  </section>
 
   <footer>Private owner dashboard. GitHub Pages contains no analytics data, credentials, or private API keys.</footer>
 </main>
@@ -175,8 +186,26 @@
   }
   function applySession(session) {
     if (!session) { showSignedOut(); return; }
-    signedInAs.textContent = session.user && session.user.email ? 'Signed in as ' + session.user.email + '.' : 'Signed in.';
+    signedInAs.textContent = 'Signed in.';
     connection.hidden = false;
+  }
+  function comparison(target, value, collectionEnabled) {
+    const data = value || {};
+    const counts = data.counts || {};
+    const total = Number(data.total || 0);
+    const entries = Object.entries(counts);
+    if (!entries.length) {
+      target.innerHTML = !collectionEnabled
+        ? '<div class="empty">Collection is disabled; no events are being recorded.</div>'
+        : data.suppressed_small_groups
+        ? '<div class="empty">Events exist, but groups smaller than 3 are hidden.</div>'
+        : '<div class="empty">No data recorded for this category.</div>';
+      return;
+    }
+    target.innerHTML = '<table><thead><tr><th>Choice</th><th>Count</th><th>Percent</th></tr></thead><tbody>' + entries.map(([key, count]) => {
+      const percent = total ? Math.round(Number(count) * 1000 / total) / 10 : 0;
+      return '<tr><td>' + safe(key) + '</td><td>' + number(count) + '</td><td>' + percent + '%</td></tr>';
+    }).join('') + '</tbody></table>';
   }
   async function initialiseAuthClient() {
     const url = document.querySelector('#supabase-url').value.trim();
@@ -260,6 +289,10 @@
       const response = await fetch(base + '/analytics/report', { headers: { Authorization: 'Bearer ' + session.access_token } });
       if (!response.ok) throw new Error('The analytics API returned HTTP ' + response.status + '.');
       const report = await response.json();
+      const collectionEnabled = report.collection_enabled === true;
+      if (!collectionEnabled) {
+        status.textContent = 'Collection is disabled; no product analytics are being recorded.';
+      }
       const requested = sum(report.answer_requests_by_mode), succeeded = sum(report.answer_successes_by_mode), failed = sum(report.answer_failures_by_mode);
       document.querySelector('#requested').textContent = number(requested);
       document.querySelector('#succeeded').textContent = number(succeeded);
@@ -270,7 +303,14 @@
       rows(document.querySelector('#sources'), report.input_sources, sum(report.input_sources), 'Source');
       rows(document.querySelector('#next'), report.answer_next_question_by_mode, sum(report.answer_next_question_by_mode), 'Mode');
       rows(document.querySelector('#failures'), report.failure_stages, sum(report.failure_stages), 'Stage');
-      dashboard.hidden = false; status.textContent = 'Loaded at ' + new Date().toLocaleString() + '.';
+      const comparisons = report.comparisons || {};
+      comparison(document.querySelector('#comparison-plan'), comparisons.plan_tier, collectionEnabled);
+      comparison(document.querySelector('#comparison-voice'), comparisons.selected_voice, collectionEnabled);
+      comparison(document.querySelector('#comparison-input'), comparisons.input_path, collectionEnabled);
+      comparison(document.querySelector('#comparison-route'), comparisons.entry_route, collectionEnabled);
+      comparison(document.querySelector('#comparison-signin'), comparisons.sign_in_method, collectionEnabled);
+      comparison(document.querySelector('#comparison-role'), comparisons.user_role, collectionEnabled);
+      dashboard.hidden = false; status.textContent = collectionEnabled ? 'Loaded at ' + new Date().toLocaleString() + '.' : 'Collection is disabled; no product analytics are being recorded.';
     } catch (error) { dashboard.hidden = true; status.className = 'status error'; status.textContent = error instanceof Error ? error.message : 'Unable to load analytics.'; }
     finally { button.disabled = false; }
   });
