@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
 import vm from 'node:vm';
@@ -10,7 +11,7 @@ const pageScript = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g
 
 assert.ok(pageScript, 'dashboard inline script exists');
 
-function runDashboard(loadBehavior) {
+function runDashboard(loadBehavior, { localSdkAvailable = false } = {}) {
   const elements = new Map();
   const requestedScripts = [];
   const oauthCalls = [];
@@ -75,6 +76,7 @@ function runDashboard(loadBehavior) {
     },
   };
   context.testSdk = sdk;
+  if (localSdkAvailable) context.supabase = sdk;
   vm.createContext(context);
   vm.runInContext(pageScript, context, { timeout: 1000 });
   elements.get('supabase-url').value = 'https://project.example.supabase.co';
@@ -82,17 +84,15 @@ function runDashboard(loadBehavior) {
   return { context, elements, oauthCalls, requestedScripts };
 }
 
-test('loads the pinned Supabase browser client from the primary CDN and starts Google OAuth', async () => {
-  const app = runDashboard(({ script, context }) => {
-    context.supabase = context.testSdk;
-    script.onload();
+test('uses the locally vendored pinned Supabase client and starts Google OAuth', async () => {
+  assert.match(html, /<script src="\.\/vendor\/supabase-js-2\.117\.2\.js" integrity="sha384-[^"]+" crossorigin="anonymous"><\/script>/);
+  const app = runDashboard(() => assert.fail('local SDK should avoid a CDN request'), {
+    localSdkAvailable: true,
   });
 
   await app.elements.get('auth-form').handlers.submit({ preventDefault() {} });
 
-  assert.deepEqual(app.requestedScripts, [
-    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2',
-  ]);
+  assert.deepEqual(app.requestedScripts, []);
   assert.equal(app.oauthCalls.length, 1);
   assert.equal(app.oauthCalls[0].provider, 'google');
   assert.equal(
@@ -100,6 +100,29 @@ test('loads the pinned Supabase browser client from the primary CDN and starts G
     'https://fredrock007.github.io/quaptureiq-site/analytics-dashboard/',
   );
   assert.match(app.elements.get('auth-status').textContent, /Redirecting to Google/);
+});
+
+test('vendored Supabase JS 2.117.2 exposes the browser client factory', async () => {
+  const sourceBytes = await readFile(new URL('./vendor/supabase-js-2.117.2.js', import.meta.url));
+  const source = sourceBytes.toString('utf8');
+  const integrity = `sha384-${createHash('sha384').update(sourceBytes).digest('base64')}`;
+  assert.ok(html.includes(`integrity="${integrity}"`), 'vendored client integrity matches the page');
+  const browser = {
+    console,
+    URL,
+    URLSearchParams,
+    TextEncoder,
+    TextDecoder,
+    AbortController,
+    setTimeout,
+    clearTimeout,
+    fetch,
+  };
+  vm.createContext(browser);
+  browser.window = browser;
+  browser.self = browser;
+  vm.runInContext(source, browser, { timeout: 1000 });
+  assert.equal(typeof browser.supabase?.createClient, 'function');
 });
 
 test('falls back to the pinned secondary CDN and starts Google OAuth', async () => {
