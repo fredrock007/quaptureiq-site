@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Private QuaptureIQ product analytics dashboard">
+  <title>QuaptureIQ Product Analytics</title>
+  <style>
+    :root { color-scheme: light; --navy:#172447; --muted:#596681; --violet:#6751c8; --cyan:#20a9bb; --line:#e5e8f2; --card:#fff; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:linear-gradient(145deg,#f4f1ff,#fbfdff 70%); color:var(--navy); font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; }
+    main { width:min(100% - 2rem,1100px); margin:auto; padding:2.5rem 0 4rem; }
+    header { display:flex; justify-content:space-between; gap:1rem; align-items:end; flex-wrap:wrap; }
+    h1 { margin:0; font-size:clamp(1.8rem,5vw,3rem); line-height:1.1; }
+    h2 { margin:0 0 1rem; font-size:1.15rem; }
+    p { color:var(--muted); }
+    .panel,.card { background:var(--card); border:1px solid var(--line); border-radius:1rem; box-shadow:0 14px 40px #272a6010; }
+    .panel { margin-top:1.5rem; padding:1rem; }
+    form { display:grid; grid-template-columns:repeat(2,1fr) auto; gap:.75rem; align-items:end; }
+    .auth-form { grid-template-columns:repeat(2,1fr); }
+    .auth-form button { grid-column:1/-1; }
+    .signed-in { display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; }
+    label { display:grid; gap:.3rem; color:var(--muted); font-size:.85rem; font-weight:650; }
+    input,button { min-height:2.75rem; border:1px solid #cbd2e3; border-radius:.6rem; padding:.6rem .75rem; font:inherit; }
+    input { color:var(--navy); background:#fff; }
+    button { cursor:pointer; color:#fff; border-color:var(--violet); background:var(--violet); font-weight:700; }
+    button:disabled { cursor:wait; opacity:.65; }
+    .status { min-height:1.5rem; margin:.75rem 0 0; font-size:.9rem; }
+    .error { color:#a33b3b; }
+    .hint { font-size:.85rem; }
+    .grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-top:1.5rem; }
+    .card { padding:1rem; }
+    .metric { font-size:2rem; font-weight:800; }
+    .muted { color:var(--muted); }
+    .section { margin-top:1.5rem; padding:1rem; }
+    table { width:100%; border-collapse:collapse; }
+    th,td { text-align:left; padding:.7rem .5rem; border-bottom:1px solid var(--line); }
+    th { color:var(--muted); font-size:.82rem; }
+    .bar { height:.55rem; min-width:2px; border-radius:99px; background:linear-gradient(90deg,var(--violet),var(--cyan)); }
+    .empty { color:var(--muted); padding:1rem 0; }
+    footer { margin-top:1.5rem; color:var(--muted); font-size:.85rem; }
+    @media (max-width:760px) { form,.grid { grid-template-columns:1fr 1fr; } form button { grid-column:1/-1; } .grid .card:last-child { grid-column:1/-1; } }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div><p class="muted">QuaptureIQ owner view</p><h1>Product analytics</h1></div>
+    <p class="hint">Aggregate metrics only. No learner content or user IDs are displayed.</p>
+  </header>
+
+  <section class="panel" aria-labelledby="auth-heading">
+    <h2 id="auth-heading">Owner sign-in</h2>
+    <p class="hint">Sign in with the same QuaptureIQ email/password account used by the app. The dashboard uses only the public Supabase client configuration; it never contains a service-role key.</p>
+    <form id="auth-form" class="auth-form">
+      <label>Supabase project URL
+        <input id="supabase-url" type="url" placeholder="https://your-project.supabase.co" autocomplete="url" required>
+      </label>
+      <label>Supabase publishable key
+        <input id="supabase-key" type="text" placeholder="Public client key" autocomplete="off" required>
+      </label>
+      <label>Email
+        <input id="owner-email" type="email" autocomplete="username" required>
+      </label>
+      <label>Password
+        <input id="owner-password" type="password" autocomplete="current-password" required>
+      </label>
+      <button id="sign-in" type="submit">Sign in</button>
+    </form>
+    <div id="auth-status" class="status" role="status" aria-live="polite"></div>
+  </section>
+
+  <section id="connection" class="panel" aria-labelledby="connection-heading" hidden>
+    <div class="signed-in">
+      <div><h2 id="connection-heading">Secure connection</h2><p id="signed-in-as" class="hint"></p></div>
+      <button id="sign-out" type="button">Sign out</button>
+    </div>
+    <form id="connection-form">
+      <label>Quapture API base URL
+        <input id="api-base" type="url" placeholder="https://your-quapture-api.example" autocomplete="url" required>
+      </label>
+      <button id="load" type="submit">Load metrics</button>
+    </form>
+    <div id="status" class="status" role="status" aria-live="polite"></div>
+    <p class="hint">The current Supabase session stays in the browser’s local auth storage until sign-out. The access token is sent only as a Bearer header to the configured API.</p>
+  </section>
+
+  <section id="dashboard" hidden>
+    <div class="grid">
+      <div class="card"><div class="muted">Answers requested</div><div id="requested" class="metric">—</div></div>
+      <div class="card"><div class="muted">Answers succeeded</div><div id="succeeded" class="metric">—</div></div>
+      <div class="card"><div class="muted">Answers failed</div><div id="failed" class="metric">—</div></div>
+      <div class="card"><div class="muted">Average duration</div><div id="duration" class="metric">—</div></div>
+    </div>
+
+    <section class="card section"><h2>Usage by mode</h2><div id="modes" class="empty">No data in this window.</div></section>
+    <section class="card section"><h2>Input source</h2><div id="sources" class="empty">No data in this window.</div></section>
+    <section class="card section"><h2>Answer-next usage</h2><div id="next" class="empty">No data in this window.</div></section>
+    <section class="card section"><h2>Normalized failure stages</h2><div id="failures" class="empty">No data in this window.</div></section>
+  </section>
+
+  <footer>Private owner dashboard. GitHub Pages contains no analytics data, credentials, or private API keys.</footer>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.10.3/dist/umd/supabase.min.js"></script>
+<script>
+  const configured = window.QAPTURE_ANALYTICS_CONFIG || {};
+  const apiInput = document.querySelector('#api-base');
+  if (configured.apiBaseUrl) apiInput.value = configured.apiBaseUrl;
+  if (configured.supabaseUrl) document.querySelector('#supabase-url').value = configured.supabaseUrl;
+  if (configured.supabasePublishableKey) document.querySelector('#supabase-key').value = configured.supabasePublishableKey;
+  const authForm = document.querySelector('#auth-form');
+  const authStatus = document.querySelector('#auth-status');
+  const connection = document.querySelector('#connection');
+  const signedInAs = document.querySelector('#signed-in-as');
+  let authClient = null;
+  const form = document.querySelector('#connection-form');
+  const status = document.querySelector('#status');
+  const dashboard = document.querySelector('#dashboard');
+  const number = (value) => Number(value || 0).toLocaleString();
+  const sum = (obj) => Object.values(obj || {}).reduce((a, b) => a + Number(b || 0), 0);
+  const safe = (value) => String(value).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function rows(target, values, total, label) {
+    const entries = Object.entries(values || {});
+    if (!entries.length) { target.innerHTML = '<div class="empty">No data in this window.</div>'; return; }
+    entries.sort((a,b) => b[1] - a[1]);
+    target.innerHTML = '<table><thead><tr><th>' + label + '</th><th>Count</th><th>Share</th></tr></thead><tbody>' + entries.map(([key,value]) => {
+      const share = total ? Math.round(value * 1000 / total) / 10 : 0;
+      return '<tr><td>' + safe(key) + '</td><td>' + number(value) + '</td><td><div class="bar" style="width:' + Math.max(share, 1) + '%" title="' + share + '%"></div></td></tr>';
+    }).join('') + '</tbody></table>';
+  }
+  function clearDashboard() {
+    dashboard.hidden = true;
+    ['requested','succeeded','failed','duration'].forEach((id) => { document.querySelector('#' + id).textContent = '—'; });
+    ['modes','sources','next','failures'].forEach((id) => { document.querySelector('#' + id).innerHTML = '<div class="empty">No data in this window.</div>'; });
+    status.textContent = '';
+  }
+  function showSignedOut() {
+    connection.hidden = true;
+    signedInAs.textContent = '';
+    clearDashboard();
+  }
+  async function currentSession() {
+    if (!authClient) return null;
+    const result = await authClient.auth.getSession();
+    return result.data.session;
+  }
+  authForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const url = document.querySelector('#supabase-url').value.trim();
+    const key = document.querySelector('#supabase-key').value.trim();
+    const email = document.querySelector('#owner-email').value.trim();
+    const password = document.querySelector('#owner-password').value;
+    const button = document.querySelector('#sign-in');
+    if (!url || !key || !email || !password) return;
+    button.disabled = true; authStatus.className = 'status'; authStatus.textContent = 'Signing in…';
+    try {
+      authClient = window.supabase.createClient(url, key, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } });
+      const result = await authClient.auth.signInWithPassword({ email, password });
+      if (result.error) throw result.error;
+      document.querySelector('#owner-password').value = '';
+      signedInAs.textContent = 'Signed in as ' + (result.data.user.email || 'owner') + '.';
+      connection.hidden = false; authStatus.textContent = 'Signed in.';
+    } catch (error) {
+      showSignedOut(); authStatus.className = 'status error'; authStatus.textContent = error instanceof Error ? error.message : 'Unable to sign in.';
+    } finally { button.disabled = false; }
+  });
+  document.querySelector('#sign-out').addEventListener('click', async () => {
+    const button = document.querySelector('#sign-out');
+    button.disabled = true;
+    try { if (authClient) await authClient.auth.signOut({ scope: 'local' }); }
+    finally {
+      document.querySelector('#owner-password').value = '';
+      showSignedOut(); authStatus.className = 'status'; authStatus.textContent = 'Signed out; dashboard data and local session cleared.'; button.disabled = false;
+    }
+  });
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const base = apiInput.value.trim().replace(/\/+$/, '');
+    const button = document.querySelector('#load');
+    const session = await currentSession();
+    if (!base || !session) { authStatus.className = 'status error'; authStatus.textContent = 'Sign in before loading metrics.'; return; }
+    button.disabled = true; status.className = 'status'; status.textContent = 'Loading aggregate metrics…';
+    try {
+      const response = await fetch(base + '/analytics/report', { headers: { Authorization: 'Bearer ' + session.access_token } });
+      if (!response.ok) throw new Error('The analytics API returned HTTP ' + response.status + '.');
+      const report = await response.json();
+      const requested = sum(report.answer_requests_by_mode), succeeded = sum(report.answer_successes_by_mode), failed = sum(report.answer_failures_by_mode);
+      document.querySelector('#requested').textContent = number(requested);
+      document.querySelector('#succeeded').textContent = number(succeeded);
+      document.querySelector('#failed').textContent = number(failed);
+      document.querySelector('#duration').textContent = number(Math.round(report.average_answer_duration_ms || 0)) + ' ms';
+      const modes = ['question','source_analysis','diagram_labels','locate'];
+      document.querySelector('#modes').innerHTML = '<table><thead><tr><th>Mode</th><th>Requested</th><th>Succeeded</th><th>Failed</th></tr></thead><tbody>' + modes.map((mode) => '<tr><td>' + safe(mode) + '</td><td>' + number((report.answer_requests_by_mode || {})[mode]) + '</td><td>' + number((report.answer_successes_by_mode || {})[mode]) + '</td><td>' + number((report.answer_failures_by_mode || {})[mode]) + '</td></tr>').join('') + '</tbody></table>';
+      rows(document.querySelector('#sources'), report.input_sources, sum(report.input_sources), 'Source');
+      rows(document.querySelector('#next'), report.answer_next_question_by_mode, sum(report.answer_next_question_by_mode), 'Mode');
+      rows(document.querySelector('#failures'), report.failure_stages, sum(report.failure_stages), 'Stage');
+      dashboard.hidden = false; status.textContent = 'Loaded at ' + new Date().toLocaleString() + '.';
+    } catch (error) { dashboard.hidden = true; status.className = 'status error'; status.textContent = error instanceof Error ? error.message : 'Unable to load analytics.'; }
+    finally { button.disabled = false; }
+  });
+  showSignedOut();
+</script>
+</body>
+</html>
