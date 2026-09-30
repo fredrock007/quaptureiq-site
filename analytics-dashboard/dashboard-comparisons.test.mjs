@@ -17,8 +17,17 @@ assert.match(html, /data-state="unknown"/);
 assert.match(html, /Analytics collection enabled/);
 assert.match(html, /Collection status unavailable/);
 assert.match(html, /typeof report\.collection_enabled === 'boolean'/);
-assert.match(html, /Collection is disabled; no product analytics are being recorded/);
+assert.match(html, /Collection is off; no events are being recorded/);
 assert.match(html, /prefers-reduced-motion: reduce/);
+assert.match(html, /apiBaseUrl.*https:\/\/84\.12\.79\.38/);
+assert.doesNotMatch(html, /id="api-base"/);
+assert.match(html, /AUTO_REFRESH_INTERVAL_MS = 60000/);
+assert.match(html, /id="active-devices"/);
+assert.match(html, /Not tracked/);
+assert.match(html, /does not collect device IDs or live-session markers/);
+assert.match(html, /Image uploaded from device/);
+assert.match(html, /Q Lens from Home/);
+
 assert.match(html, /counts\s*\|\|\s*\{\}/);
 assert.match(html, /Math\.round\(Number\(count\) \* 1000 \/ total\)/);
 assert.match(html, /groups smaller than 3 are hidden/);

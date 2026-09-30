@@ -15,10 +15,13 @@ function runDashboard(loadBehavior, {
   localSdkAvailable = false,
   session = null,
   report = {},
+  storedConfig = null,
 } = {}) {
   const elements = new Map();
   const requestedScripts = [];
   const oauthCalls = [];
+  const fetchRequests = [];
+  const intervals = [];
   const makeElement = () => ({
     value: '',
     hidden: false,
@@ -31,6 +34,7 @@ function runDashboard(loadBehavior, {
     addEventListener(eventName, handler) { this.handlers[eventName] = handler; },
   });
   const document = {
+    visibilityState: 'visible',
     querySelector(selector) {
       const id = selector.slice(1);
       if (!elements.has(id)) elements.set(id, makeElement());
@@ -52,15 +56,27 @@ function runDashboard(loadBehavior, {
     document,
     location: { href: 'https://fredrock007.github.io/quaptureiq-site/analytics-dashboard/' },
     localStorage: {
-      getItem() { return null; },
+      getItem(key) {
+        return key === 'qaptureiq-analytics-public-config' && storedConfig
+          ? JSON.stringify(storedConfig) : null;
+      },
       setItem() {},
       removeItem() {},
     },
     setTimeout,
     clearTimeout,
+    setInterval(callback, milliseconds) {
+      const interval = { callback, milliseconds, cleared: false };
+      intervals.push(interval);
+      return intervals.length;
+    },
+    clearInterval(id) {
+      if (intervals[id - 1]) intervals[id - 1].cleared = true;
+    },
     async fetch(url, options) {
-      assert.match(url, /\/analytics\/report$/);
+      assert.equal(url, 'https://84.12.79.38/analytics/report');
       assert.equal(options.headers.Authorization, 'Bearer test-access-token');
+      fetchRequests.push({ url, options });
       return { ok: true, async json() { return report; } };
     },
   };
@@ -91,8 +107,7 @@ function runDashboard(loadBehavior, {
   vm.runInContext(pageScript, context, { timeout: 1000 });
   elements.get('supabase-url').value = 'https://project.example.supabase.co';
   elements.get('supabase-key').value = 'sb_publishable_test_key';
-  elements.get('api-base').value = 'https://api.example.test';
-  return { context, elements, oauthCalls, requestedScripts };
+  return { context, elements, oauthCalls, requestedScripts, fetchRequests, intervals };
 }
 
 test('uses the locally vendored pinned Supabase client and starts Google OAuth', async () => {
@@ -174,25 +189,73 @@ test('shows a clear sign-in message when both pinned client sources fail', async
 });
 
 
-test('shows an enabled collection badge only when the API reports true', async () => {
+test('restores the saved Google session, auto-loads metrics, and refreshes automatically', async () => {
   const app = runDashboard(() => assert.fail('local SDK should avoid a CDN request'), {
     localSdkAvailable: true,
     session: { access_token: 'test-access-token' },
+    storedConfig: {
+      supabaseUrl: 'https://project.example.supabase.co',
+      supabasePublishableKey: 'sb_publishable_test_key',
+    },
     report: { collection_enabled: true },
   });
-  await app.elements.get('connection-form').handlers.submit({ preventDefault() {} });
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(app.fetchRequests.length, 1, 'saved session loads metrics without another click');
   assert.equal(app.elements.get('collection-status').dataset.state, 'enabled');
   assert.equal(app.elements.get('collection-status-label').textContent, 'Analytics collection enabled');
+  assert.doesNotMatch(html, /id="api-base"/);
+  assert.equal(app.intervals.length, 1);
+  assert.equal(app.intervals[0].milliseconds, 60000);
+  app.intervals[0].callback();
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(app.fetchRequests.length, 2, 'visible dashboard auto-refreshes');
+  assert.match(app.elements.get('status').textContent, /Refreshes automatically every minute/);
 });
 
 test('shows status unavailable when the API omits collection_enabled', async () => {
   const app = runDashboard(() => assert.fail('local SDK should avoid a CDN request'), {
     localSdkAvailable: true,
     session: { access_token: 'test-access-token' },
+    storedConfig: {
+      supabaseUrl: 'https://project.example.supabase.co',
+      supabasePublishableKey: 'sb_publishable_test_key',
+    },
     report: {},
   });
-  await app.elements.get('connection-form').handlers.submit({ preventDefault() {} });
+  await new Promise((resolve) => setImmediate(resolve));
   assert.equal(app.elements.get('collection-status').dataset.state, 'unknown');
   assert.equal(app.elements.get('collection-status-label').textContent, 'Collection status unavailable');
-  assert.match(app.elements.get('status').textContent, /API did not report collection status/);
+  assert.match(app.elements.get('status').textContent, /Refreshes automatically every minute/);
+});
+
+test('renders friendly names for recorded analytics categories', async () => {
+  const app = runDashboard(() => assert.fail('local SDK should avoid a CDN request'), {
+    localSdkAvailable: true,
+    session: { access_token: 'test-access-token' },
+    storedConfig: {
+      supabaseUrl: 'https://project.example.supabase.co',
+      supabasePublishableKey: 'sb_publishable_test_key',
+    },
+    report: {
+      collection_enabled: true,
+      input_sources: { device_image: 3, ordinary_photo: 3, scanner: 3 },
+      answer_requests_by_mode: { source_analysis: 3 },
+      comparisons: {
+        input_path: { counts: { choose_photo: 3, take_photo: 3, scan_document: 3 }, total: 9 },
+        plan_tier: { counts: { student: 3 }, total: 3 },
+        selected_voice: { counts: { quapture_voice: 3 }, total: 3 },
+        entry_route: { counts: { q_lens_home: 3 }, total: 3 },
+        sign_in_method: { counts: { google: 3 }, total: 3 },
+      },
+    },
+  });
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.match(app.elements.get('sources').innerHTML, /Image uploaded from device/);
+  assert.doesNotMatch(app.elements.get('sources').innerHTML, /device_image/);
+  assert.match(app.elements.get('modes').innerHTML, /Source analysis/);
+  assert.match(app.elements.get('comparison-input').innerHTML, /Choose a photo/);
+  assert.match(app.elements.get('comparison-input').innerHTML, /Take a photo/);
+  assert.match(app.elements.get('comparison-input').innerHTML, /Scan a document/);
+  assert.match(app.elements.get('comparison-route').innerHTML, /Q Lens from Home/);
+  assert.match(app.elements.get('comparison-signin').innerHTML, /Google/);
 });

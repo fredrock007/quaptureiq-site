@@ -21,6 +21,8 @@
     .auth-form button { min-width:15rem; }
     .signed-in { display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; }
     .connection-actions { display:flex; align-items:center; gap:.75rem; flex-wrap:wrap; }
+    .connection-tools { display:flex; align-items:center; justify-content:space-between; gap:.75rem; flex-wrap:wrap; margin-top:.75rem; }
+    .connection-tools .hint { margin:.25rem 0; }
     .collection-status { display:inline-flex; align-items:center; gap:.55rem; min-height:2.75rem; margin:0; padding:.55rem .85rem; border:1px solid var(--line); border-radius:999px; color:var(--muted); background:#fff; font-size:.9rem; font-weight:750; }
     .collection-led { width:.62rem; height:.62rem; flex:0 0 auto; border-radius:50%; background:#8792a5; }
     .collection-status[data-state="enabled"] { color:#145c3a; border-color:#b9e4cb; background:#effaf3; }
@@ -88,14 +90,12 @@
         <button id="sign-out" type="button">Sign out</button>
       </div>
     </div>
-    <form id="connection-form">
-      <label>Quapture API base URL
-        <input id="api-base" type="url" placeholder="https://your-quapture-api.example" autocomplete="url" required>
-      </label>
-      <button id="load" type="submit">Load metrics</button>
-    </form>
+    <div class="connection-tools">
+      <p class="hint">Metrics load after sign-in and refresh automatically every minute.</p>
+      <button id="refresh-now" type="button">Refresh now</button>
+    </div>
     <div id="status" class="status" role="status" aria-live="polite"></div>
-    <p class="hint">The current Supabase session stays in the browser’s local auth storage until sign-out. The access token is sent only as a Bearer header to the configured API.</p>
+    <p class="hint">Your browser keeps the Supabase session until sign-out. The access token is sent only to QuaptureIQ’s owner-protected API.</p>
   </section>
 
   <section id="dashboard" hidden>
@@ -104,6 +104,7 @@
       <div class="card"><div class="muted">Answers succeeded</div><div id="succeeded" class="metric">—</div></div>
       <div class="card"><div class="muted">Answers failed</div><div id="failed" class="metric">—</div></div>
       <div class="card"><div class="muted">Average duration</div><div id="duration" class="metric">—</div></div>
+      <div class="card"><div class="muted">Devices currently active</div><div id="active-devices" class="metric">Not tracked</div><p class="hint">The current analytics setup does not collect device IDs or live-session markers.</p></div>
     </div>
 
     <section class="card section"><h2>Usage by mode</h2><div id="modes" class="empty">No data in this window.</div></section>
@@ -165,8 +166,7 @@
   const publicConfigStorageKey = 'qaptureiq-analytics-public-config';
   let storedConfig = {};
   try { storedConfig = JSON.parse(window.localStorage.getItem(publicConfigStorageKey) || '{}'); } catch (_) { storedConfig = {}; }
-  const apiInput = document.querySelector('#api-base');
-  if (configured.apiBaseUrl) apiInput.value = configured.apiBaseUrl;
+  const apiBaseUrl = (configured.apiBaseUrl || 'https://84.12.79.38').replace(/\/+$/, '');
   document.querySelector('#supabase-url').value = configured.supabaseUrl || storedConfig.supabaseUrl || '';
   document.querySelector('#supabase-key').value = configured.supabasePublishableKey || storedConfig.supabasePublishableKey || '';
   const authForm = document.querySelector('#auth-form');
@@ -174,19 +174,38 @@
   const connection = document.querySelector('#connection');
   const signedInAs = document.querySelector('#signed-in-as');
   let authClient = null;
-  const form = document.querySelector('#connection-form');
+  const refreshButton = document.querySelector('#refresh-now');
   const status = document.querySelector('#status');
   const dashboard = document.querySelector('#dashboard');
+  const AUTO_REFRESH_INTERVAL_MS = 60000;
+  let autoRefreshTimer = null;
+  let automaticLoadStarted = false;
+  let requestInFlight = false;
   const number = (value) => Number(value || 0).toLocaleString();
   const sum = (obj) => Object.values(obj || {}).reduce((a, b) => a + Number(b || 0), 0);
   const safe = (value) => String(value).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const friendlyLabels = {
+    question: 'Question', source_analysis: 'Source analysis', diagram_labels: 'Diagram labels', locate: 'Locate',
+    scanner: 'Document scan', ordinary_photo: 'Photo taken', device_image: 'Image uploaded from device',
+    scan_document: 'Scan a document', take_photo: 'Take a photo', choose_photo: 'Choose a photo',
+    q_lens_home: 'Q Lens from Home', dashboard_route: 'Dashboard route',
+    email: 'Email', google: 'Google', sky: 'Sky', quapture_voice: 'Quapture Voice',
+    free: 'Free', student: 'Student', professional: 'Professional',
+    request_validation: 'Request validation', provider_request: 'Provider request', response_validation: 'Response validation',
+  };
+  function friendlyLabel(value) {
+    const raw = String(value).trim();
+    const key = raw.toLowerCase();
+    if (friendlyLabels[key]) return friendlyLabels[key];
+    return key.replace(/[_-]+/g, ' ').replace(/\b\w/g, (character) => character.toUpperCase());
+  }
   function rows(target, values, total, label) {
     const entries = Object.entries(values || {});
     if (!entries.length) { target.innerHTML = '<div class="empty">No data in this window.</div>'; return; }
     entries.sort((a,b) => b[1] - a[1]);
     target.innerHTML = '<table><thead><tr><th>' + label + '</th><th>Count</th><th>Share</th></tr></thead><tbody>' + entries.map(([key,value]) => {
       const share = total ? Math.round(value * 1000 / total) / 10 : 0;
-      return '<tr><td>' + safe(key) + '</td><td>' + number(value) + '</td><td><div class="bar" style="width:' + Math.max(share, 1) + '%" title="' + share + '%"></div></td></tr>';
+      return '<tr><td>' + safe(friendlyLabel(key)) + '</td><td>' + number(value) + '</td><td><div class="bar" style="width:' + Math.max(share, 1) + '%" title="' + share + '%"></div></td></tr>';
     }).join('') + '</tbody></table>';
   }
   function setCollectionStatus(state) {
@@ -213,7 +232,13 @@
     ['modes','sources','next','failures'].forEach((id) => { document.querySelector('#' + id).innerHTML = '<div class="empty">No data in this window.</div>'; });
     status.textContent = '';
   }
+  function stopAutoRefresh() {
+    if (autoRefreshTimer !== null) window.clearInterval(autoRefreshTimer);
+    autoRefreshTimer = null;
+  }
   function showSignedOut() {
+    stopAutoRefresh();
+    automaticLoadStarted = false;
     connection.hidden = true;
     signedInAs.textContent = '';
     clearDashboard();
@@ -222,7 +247,15 @@
     if (!session) { showSignedOut(); return; }
     signedInAs.textContent = 'Signed in.';
     connection.hidden = false;
-    setCollectionStatus(null);
+    if (!automaticLoadStarted) {
+      automaticLoadStarted = true;
+      void loadMetrics();
+    }
+    if (autoRefreshTimer === null) {
+      autoRefreshTimer = window.setInterval(() => {
+        if (document.visibilityState !== 'hidden' && !dashboard.hidden) void loadMetrics({ silent: true });
+      }, AUTO_REFRESH_INTERVAL_MS);
+    }
   }
   function comparison(target, value, collectionEnabled) {
     const data = value || {};
@@ -239,7 +272,7 @@
     }
     target.innerHTML = '<table><thead><tr><th>Choice</th><th>Count</th><th>Percent</th></tr></thead><tbody>' + entries.map(([key, count]) => {
       const percent = total ? Math.round(Number(count) * 1000 / total) / 10 : 0;
-      return '<tr><td>' + safe(key) + '</td><td>' + number(count) + '</td><td>' + percent + '%</td></tr>';
+      return '<tr><td>' + safe(friendlyLabel(key)) + '</td><td>' + number(count) + '</td><td>' + percent + '%</td></tr>';
     }).join('') + '</tbody></table>';
   }
   async function initialiseAuthClient() {
@@ -313,16 +346,24 @@
       button.disabled = false;
     }
   });
-  form.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const base = apiInput.value.trim().replace(/\/+$/, '');
-    const button = document.querySelector('#load');
-    const session = await currentSession();
-    if (!base || !session) { authStatus.className = 'status error'; authStatus.textContent = 'Sign in before loading metrics.'; return; }
-    button.disabled = true; status.className = 'status'; status.textContent = 'Loading aggregate metrics…';
-    setCollectionStatus('checking');
+  async function loadMetrics({ silent = false } = {}) {
+    if (requestInFlight) return;
+    requestInFlight = true;
+    if (!silent) {
+      refreshButton.disabled = true;
+      status.className = 'status';
+      status.textContent = 'Loading aggregate metrics…';
+      setCollectionStatus('checking');
+    }
     try {
-      const response = await fetch(base + '/analytics/report', { headers: { Authorization: 'Bearer ' + session.access_token } });
+      const session = await currentSession();
+      if (!session) {
+        showSignedOut();
+        authStatus.className = 'status error';
+        authStatus.textContent = 'Your session has ended. Continue with Google to sign in again.';
+        return;
+      }
+      const response = await fetch(apiBaseUrl + '/analytics/report', { headers: { Authorization: 'Bearer ' + session.access_token } });
       if (!response.ok) throw new Error('The analytics API returned HTTP ' + response.status + '.');
       const report = await response.json();
       const collectionEnabled = typeof report.collection_enabled === 'boolean'
@@ -334,10 +375,10 @@
       document.querySelector('#failed').textContent = number(failed);
       document.querySelector('#duration').textContent = number(Math.round(report.average_answer_duration_ms || 0)) + ' ms';
       const modes = ['question','source_analysis','diagram_labels','locate'];
-      document.querySelector('#modes').innerHTML = '<table><thead><tr><th>Mode</th><th>Requested</th><th>Succeeded</th><th>Failed</th></tr></thead><tbody>' + modes.map((mode) => '<tr><td>' + safe(mode) + '</td><td>' + number((report.answer_requests_by_mode || {})[mode]) + '</td><td>' + number((report.answer_successes_by_mode || {})[mode]) + '</td><td>' + number((report.answer_failures_by_mode || {})[mode]) + '</td></tr>').join('') + '</tbody></table>';
-      rows(document.querySelector('#sources'), report.input_sources, sum(report.input_sources), 'Source');
+      document.querySelector('#modes').innerHTML = '<table><thead><tr><th>Mode</th><th>Requested</th><th>Succeeded</th><th>Failed</th></tr></thead><tbody>' + modes.map((mode) => '<tr><td>' + safe(friendlyLabel(mode)) + '</td><td>' + number((report.answer_requests_by_mode || {})[mode]) + '</td><td>' + number((report.answer_successes_by_mode || {})[mode]) + '</td><td>' + number((report.answer_failures_by_mode || {})[mode]) + '</td></tr>').join('') + '</tbody></table>';
+      rows(document.querySelector('#sources'), report.input_sources, sum(report.input_sources), 'Input source');
       rows(document.querySelector('#next'), report.answer_next_question_by_mode, sum(report.answer_next_question_by_mode), 'Mode');
-      rows(document.querySelector('#failures'), report.failure_stages, sum(report.failure_stages), 'Stage');
+      rows(document.querySelector('#failures'), report.failure_stages, sum(report.failure_stages), 'Failure stage');
       const comparisons = report.comparisons || {};
       comparison(document.querySelector('#comparison-plan'), comparisons.plan_tier, collectionEnabled);
       comparison(document.querySelector('#comparison-voice'), comparisons.selected_voice, collectionEnabled);
@@ -346,17 +387,21 @@
       comparison(document.querySelector('#comparison-signin'), comparisons.sign_in_method, collectionEnabled);
       comparison(document.querySelector('#comparison-role'), comparisons.user_role, collectionEnabled);
       dashboard.hidden = false;
-      status.textContent = collectionEnabled === true
-        ? 'Loaded at ' + new Date().toLocaleString() + '.'
-        : collectionEnabled === false
-        ? 'Collection is disabled; no product analytics are being recorded.'
-        : 'Metrics loaded, but the API did not report collection status.';
+      status.className = 'status';
+      status.textContent = 'Updated at ' + new Date().toLocaleTimeString() + '. Refreshes automatically every minute.';
     } catch (error) {
-      setCollectionStatus(null);
-      dashboard.hidden = true; status.className = 'status error'; status.textContent = error instanceof Error ? error.message : 'Unable to load analytics.';
+      if (!silent) {
+        setCollectionStatus(null);
+        dashboard.hidden = true;
+      }
+      status.className = 'status error';
+      status.textContent = (silent ? 'Automatic refresh failed: ' : '') + (error instanceof Error ? error.message : 'Unable to load analytics.');
+    } finally {
+      requestInFlight = false;
+      refreshButton.disabled = false;
     }
-    finally { button.disabled = false; }
-  });
+  }
+  refreshButton.addEventListener('click', () => { void loadMetrics(); });
   showSignedOut();
   restoreSession().catch((error) => {
     authStatus.className = 'status error';
