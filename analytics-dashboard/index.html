@@ -87,7 +87,7 @@
           <span class="collection-led" aria-hidden="true"></span>
           <span id="collection-status-label">Check status by loading metrics</span>
         </p>
-        <button id="sign-out" type="button">Sign out</button>
+        <button id="sign-out" type="button">Sign out of dashboard</button>
       </div>
     </div>
     <div class="connection-tools">
@@ -95,6 +95,7 @@
       <button id="refresh-now" type="button">Refresh now</button>
     </div>
     <div id="status" class="status" role="status" aria-live="polite"></div>
+    <p class="hint">Signing out here clears this dashboard browser session only. It does not sign you out of the QuaptureIQ mobile app.</p>
     <p class="hint">Your browser keeps the Supabase session until sign-out. The access token is sent only to QuaptureIQ’s owner-protected API.</p>
   </section>
 
@@ -104,7 +105,7 @@
       <div class="card"><div class="muted">Answers succeeded</div><div id="succeeded" class="metric">—</div></div>
       <div class="card"><div class="muted">Answers failed</div><div id="failed" class="metric">—</div></div>
       <div class="card"><div class="muted">Average duration</div><div id="duration" class="metric">—</div></div>
-      <div class="card"><div class="muted">Devices currently active</div><div id="active-devices" class="metric">Not tracked</div><p class="hint">The current analytics setup does not collect device IDs or live-session markers.</p></div>
+      <div class="card"><div class="muted">Active app sessions</div><div id="active-devices" class="metric">—</div><p class="hint">Signed-in app instances reporting within the last 2 minutes. This is an approximate current-use count, not a unique-user or unique-device count. A random temporary marker stays in API memory only and is not linked to an account or stable device ID.</p></div>
     </div>
 
     <section class="card section"><h2>Usage by mode</h2><div id="modes" class="empty">No data in this window.</div></section>
@@ -339,7 +340,7 @@
         const result = await authClient.auth.signOut({ scope: 'local' });
         if (result.error) throw result.error;
       }
-      showSignedOut(); authStatus.className = 'status'; authStatus.textContent = 'Signed out; dashboard data and local session cleared.';
+      showSignedOut(); authStatus.className = 'status'; authStatus.textContent = 'Signed out of the dashboard; the mobile app remains signed in.';
     } catch (error) {
       authStatus.className = 'status error'; authStatus.textContent = error instanceof Error ? error.message : 'Unable to sign out.';
     } finally {
@@ -369,6 +370,8 @@
       const collectionEnabled = typeof report.collection_enabled === 'boolean'
         ? report.collection_enabled : null;
       setCollectionStatus(collectionEnabled);
+      const activeSessions = report.active_app_sessions;
+      document.querySelector('#active-devices').textContent = Number.isInteger(activeSessions) && activeSessions >= 0 ? number(activeSessions) : 'Not available';
       const requested = sum(report.answer_requests_by_mode), succeeded = sum(report.answer_successes_by_mode), failed = sum(report.answer_failures_by_mode);
       document.querySelector('#requested').textContent = number(requested);
       document.querySelector('#succeeded').textContent = number(succeeded);

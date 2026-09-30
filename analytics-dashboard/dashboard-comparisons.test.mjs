@@ -23,8 +23,12 @@ assert.match(html, /apiBaseUrl.*https:\/\/84\.12\.79\.38/);
 assert.doesNotMatch(html, /id="api-base"/);
 assert.match(html, /AUTO_REFRESH_INTERVAL_MS = 60000/);
 assert.match(html, /id="active-devices"/);
-assert.match(html, /Not tracked/);
-assert.match(html, /does not collect device IDs or live-session markers/);
+assert.match(html, /Active app sessions/);
+assert.match(html, /not a unique-user or unique-device count/);
+assert.match(html, /report\.active_app_sessions/);
+assert.match(html, /Number\.isInteger\(activeSessions\)/);
+assert.match(html, /Sign out of dashboard/);
+assert.match(html, /does not sign you out of the QuaptureIQ mobile app/);
 assert.match(html, /Image uploaded from device/);
 assert.match(html, /Q Lens from Home/);
 
