@@ -12,11 +12,17 @@ for (const id of [
 }
 assert.doesNotMatch(html, /id="comparison-gender"/);
 assert.match(html, /The app does not currently record an explicit user-selected role/);
+assert.match(html, /id="collection-status"/);
+assert.match(html, /data-state="unknown"/);
+assert.match(html, /Analytics collection enabled/);
+assert.match(html, /Collection status unavailable/);
+assert.match(html, /typeof report\.collection_enabled === 'boolean'/);
 assert.match(html, /Collection is disabled; no product analytics are being recorded/);
+assert.match(html, /prefers-reduced-motion: reduce/);
 assert.match(html, /counts\s*\|\|\s*\{\}/);
 assert.match(html, /Math\.round\(Number\(count\) \* 1000 \/ total\)/);
 assert.match(html, /groups smaller than 3 are hidden/);
-assert.match(html, /Collection is disabled; no events are being recorded/);
+assert.match(html, /Collection is off; no events are being recorded/);
 assert.match(html, /@media \(max-width:760px\).*comparison-grid/);
 assert.doesNotMatch(html, /session\.user\.email/);
 

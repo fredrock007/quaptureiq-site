@@ -11,7 +11,11 @@ const pageScript = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g
 
 assert.ok(pageScript, 'dashboard inline script exists');
 
-function runDashboard(loadBehavior, { localSdkAvailable = false } = {}) {
+function runDashboard(loadBehavior, {
+  localSdkAvailable = false,
+  session = null,
+  report = {},
+} = {}) {
   const elements = new Map();
   const requestedScripts = [];
   const oauthCalls = [];
@@ -20,6 +24,7 @@ function runDashboard(loadBehavior, { localSdkAvailable = false } = {}) {
     hidden: false,
     disabled: false,
     className: '',
+    dataset: {},
     textContent: '',
     innerHTML: '',
     handlers: {},
@@ -53,6 +58,11 @@ function runDashboard(loadBehavior, { localSdkAvailable = false } = {}) {
     },
     setTimeout,
     clearTimeout,
+    async fetch(url, options) {
+      assert.match(url, /\/analytics\/report$/);
+      assert.equal(options.headers.Authorization, 'Bearer test-access-token');
+      return { ok: true, async json() { return report; } };
+    },
   };
   context.window = context;
   context.supabase = undefined;
@@ -60,7 +70,7 @@ function runDashboard(loadBehavior, { localSdkAvailable = false } = {}) {
   const client = {
     auth: {
       onAuthStateChange() {},
-      async getSession() { return { data: { session: null } }; },
+      async getSession() { return { data: { session } }; },
       async signInWithOAuth(options) {
         oauthCalls.push(options);
         return { error: null };
@@ -81,6 +91,7 @@ function runDashboard(loadBehavior, { localSdkAvailable = false } = {}) {
   vm.runInContext(pageScript, context, { timeout: 1000 });
   elements.get('supabase-url').value = 'https://project.example.supabase.co';
   elements.get('supabase-key').value = 'sb_publishable_test_key';
+  elements.get('api-base').value = 'https://api.example.test';
   return { context, elements, oauthCalls, requestedScripts };
 }
 
@@ -160,4 +171,28 @@ test('shows a clear sign-in message when both pinned client sources fail', async
   assert.doesNotMatch(app.elements.get('auth-status').textContent, /authClient|undefined|null/);
   assert.equal(app.oauthCalls.length, 0);
   assert.equal(app.elements.get('sign-in').disabled, false);
+});
+
+
+test('shows an enabled collection badge only when the API reports true', async () => {
+  const app = runDashboard(() => assert.fail('local SDK should avoid a CDN request'), {
+    localSdkAvailable: true,
+    session: { access_token: 'test-access-token' },
+    report: { collection_enabled: true },
+  });
+  await app.elements.get('connection-form').handlers.submit({ preventDefault() {} });
+  assert.equal(app.elements.get('collection-status').dataset.state, 'enabled');
+  assert.equal(app.elements.get('collection-status-label').textContent, 'Analytics collection enabled');
+});
+
+test('shows status unavailable when the API omits collection_enabled', async () => {
+  const app = runDashboard(() => assert.fail('local SDK should avoid a CDN request'), {
+    localSdkAvailable: true,
+    session: { access_token: 'test-access-token' },
+    report: {},
+  });
+  await app.elements.get('connection-form').handlers.submit({ preventDefault() {} });
+  assert.equal(app.elements.get('collection-status').dataset.state, 'unknown');
+  assert.equal(app.elements.get('collection-status-label').textContent, 'Collection status unavailable');
+  assert.match(app.elements.get('status').textContent, /API did not report collection status/);
 });
