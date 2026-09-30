@@ -22,6 +22,7 @@ function runDashboard(loadBehavior, {
   const oauthCalls = [];
   const fetchRequests = [];
   const intervals = [];
+  const toastTimers = [];
   const makeElement = () => ({
     value: '',
     hidden: false,
@@ -63,8 +64,14 @@ function runDashboard(loadBehavior, {
       setItem() {},
       removeItem() {},
     },
-    setTimeout,
-    clearTimeout,
+    setTimeout(callback, milliseconds) {
+      const timer = { callback, milliseconds, cleared: false };
+      toastTimers.push(timer);
+      return toastTimers.length;
+    },
+    clearTimeout(id) {
+      if (toastTimers[id - 1]) toastTimers[id - 1].cleared = true;
+    },
     setInterval(callback, milliseconds) {
       const interval = { callback, milliseconds, cleared: false };
       intervals.push(interval);
@@ -91,6 +98,10 @@ function runDashboard(loadBehavior, {
         oauthCalls.push(options);
         return { error: null };
       },
+      async signOut(options) {
+        client.signOutOptions = options;
+        return { error: null };
+      },
     },
   };
   const sdk = {
@@ -107,11 +118,12 @@ function runDashboard(loadBehavior, {
   vm.runInContext(pageScript, context, { timeout: 1000 });
   elements.get('supabase-url').value = 'https://project.example.supabase.co';
   elements.get('supabase-key').value = 'sb_publishable_test_key';
-  return { context, elements, oauthCalls, requestedScripts, fetchRequests, intervals };
+  return { context, elements, oauthCalls, requestedScripts, fetchRequests, intervals, toastTimers, client };
 }
 
 test('uses the locally vendored pinned Supabase client and starts Google OAuth', async () => {
   assert.match(html, /<script src="\.\/vendor\/supabase-js-2\.117\.2\.js" integrity="sha384-[^"]+" crossorigin="anonymous"><\/script>/);
+  assert.match(html, /id="toast" class="toast" role="status" aria-live="polite"/);
   const app = runDashboard(() => assert.fail('local SDK should avoid a CDN request'), {
     localSdkAvailable: true,
   });
@@ -126,6 +138,8 @@ test('uses the locally vendored pinned Supabase client and starts Google OAuth',
     'https://fredrock007.github.io/quaptureiq-site/analytics-dashboard/',
   );
   assert.match(app.elements.get('auth-status').textContent, /Redirecting to Google/);
+  assert.equal(app.elements.get('toast').textContent, 'Google sign-in is starting…');
+  assert.equal(app.elements.get('toast').dataset.kind, 'success');
 });
 
 test('vendored Supabase JS 2.117.2 exposes the browser client factory', async () => {
@@ -186,6 +200,8 @@ test('shows a clear sign-in message when both pinned client sources fail', async
   assert.doesNotMatch(app.elements.get('auth-status').textContent, /authClient|undefined|null/);
   assert.equal(app.oauthCalls.length, 0);
   assert.equal(app.elements.get('sign-in').disabled, false);
+  assert.equal(app.elements.get('toast').dataset.kind, 'error');
+  assert.match(app.elements.get('toast').textContent, /Google sign-in is temporarily unavailable/);
 });
 
 
@@ -197,12 +213,13 @@ test('restores the saved Google session, auto-loads metrics, and refreshes autom
       supabaseUrl: 'https://project.example.supabase.co',
       supabasePublishableKey: 'sb_publishable_test_key',
     },
-    report: { collection_enabled: true },
+    report: { collection_enabled: true, active_app_sessions: 1 },
   });
   await new Promise((resolve) => setImmediate(resolve));
   assert.equal(app.fetchRequests.length, 1, 'saved session loads metrics without another click');
   assert.equal(app.elements.get('collection-status').dataset.state, 'enabled');
   assert.equal(app.elements.get('collection-status-label').textContent, 'Analytics collection enabled');
+  assert.equal(app.elements.get('active-devices').textContent, '1');
   assert.doesNotMatch(html, /id="api-base"/);
   assert.equal(app.intervals.length, 1);
   assert.equal(app.intervals[0].milliseconds, 60000);
@@ -210,6 +227,17 @@ test('restores the saved Google session, auto-loads metrics, and refreshes autom
   await new Promise((resolve) => setImmediate(resolve));
   assert.equal(app.fetchRequests.length, 2, 'visible dashboard auto-refreshes');
   assert.match(app.elements.get('status').textContent, /Refreshes automatically every minute/);
+
+  await app.elements.get('refresh-now').handlers.click();
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(app.fetchRequests.length, 3, 'manual refresh loads the report');
+  assert.equal(app.elements.get('toast').textContent, 'Dashboard refreshed.');
+  assert.equal(app.elements.get('toast').dataset.kind, 'success');
+
+  await app.elements.get('sign-out').handlers.click();
+  assert.equal(app.client.signOutOptions.scope, 'local');
+  assert.equal(app.elements.get('toast').textContent, 'Signed out of the dashboard. The mobile app remains signed in.');
+  assert.equal(app.elements.get('toast').dataset.kind, 'success');
 });
 
 test('shows status unavailable when the API omits collection_enabled', async () => {

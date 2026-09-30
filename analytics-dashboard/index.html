@@ -38,7 +38,13 @@
     button { cursor:pointer; color:#fff; border-color:var(--violet); background:var(--violet); font-weight:700; }
     button:disabled { cursor:wait; opacity:.65; }
     .status { min-height:1.5rem; margin:.75rem 0 0; font-size:.9rem; }
+    .toast { position:fixed; z-index:1000; left:50%; bottom:calc(1rem + env(safe-area-inset-bottom)); width:max-content; max-width:min(90vw,36rem); transform:translateX(-50%); padding:.8rem 1rem; border-radius:.85rem; color:#fff; background:#302765; box-shadow:0 12px 32px #11152b35; font-weight:700; }
+    .toast[data-kind="error"] { background:#8c343d; }
+    .toast[data-kind="success"] { background:#276747; }
+    .toast[hidden] { display:none; }
     .error { color:#a33b3b; }
+    @media (prefers-reduced-motion: no-preference) { .toast:not([hidden]) { animation:toast-in .18s ease-out both; } }
+    @keyframes toast-in { from { opacity:0; translate:0 .4rem; } to { opacity:1; translate:0 0; } }
     .hint { font-size:.85rem; }
     .grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-top:1.5rem; }
     .card { padding:1rem; }
@@ -105,7 +111,7 @@
       <div class="card"><div class="muted">Answers succeeded</div><div id="succeeded" class="metric">—</div></div>
       <div class="card"><div class="muted">Answers failed</div><div id="failed" class="metric">—</div></div>
       <div class="card"><div class="muted">Average duration</div><div id="duration" class="metric">—</div></div>
-      <div class="card"><div class="muted">Active app sessions</div><div id="active-devices" class="metric">—</div><p class="hint">Signed-in app instances reporting within the last 2 minutes. This is an approximate current-use count, not a unique-user or unique-device count. A random temporary marker stays in API memory only and is not linked to an account or stable device ID.</p></div>
+      <div class="card"><div class="muted">Active app sessions</div><div id="active-devices" class="metric">—</div><p class="hint">This temporary count includes signed-in app sessions with a successful foreground marker or heartbeat in the last 2 minutes. It is not a unique-user or unique-device count. If you are on Home but this stays at 0, the app marker may not be reaching the API. Home is not a usage mode; mode totals update after you select a mode. Markers stay in API memory and are not linked to accounts or stable device IDs.</p></div>
     </div>
 
     <section class="card section"><h2>Usage by mode</h2><div id="modes" class="empty">No data in this window.</div></section>
@@ -124,6 +130,7 @@
 
   <footer>Private owner dashboard. GitHub Pages contains no analytics data, credentials, or private API keys.</footer>
 </main>
+<div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
 <script src="./vendor/supabase-js-2.117.2.js" integrity="sha384-WgXwGL6fUsYJWNaKJgVbrJKGRQwc1vieh2oy4kw9nXqpNDz3tdSsqEYUgeHD/NuF" crossorigin="anonymous"></script>
 <script>
   const supabaseLibrarySources = [
@@ -178,6 +185,15 @@
   const refreshButton = document.querySelector('#refresh-now');
   const status = document.querySelector('#status');
   const dashboard = document.querySelector('#dashboard');
+  const toast = document.querySelector('#toast');
+  let toastTimer = null;
+  function showToast(message, kind = 'success') {
+    toast.textContent = message;
+    toast.dataset.kind = kind;
+    toast.hidden = false;
+    if (toastTimer !== null) window.clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(() => { toast.hidden = true; toastTimer = null; }, 3500);
+  }
   const AUTO_REFRESH_INTERVAL_MS = 60000;
   let autoRefreshTimer = null;
   let automaticLoadStarted = false;
@@ -318,6 +334,7 @@
     const button = document.querySelector('#sign-in');
     if (!url || !key) return;
     button.disabled = true; authStatus.className = 'status'; authStatus.textContent = 'Signing in with Google…';
+    showToast('Opening Google sign-in…', 'info');
     try {
       window.localStorage.setItem(publicConfigStorageKey, JSON.stringify({ supabaseUrl: url, supabasePublishableKey: key }));
       authClient = authClient || await initialiseAuthClient();
@@ -328,28 +345,34 @@
       });
       if (result.error) throw result.error;
       authStatus.textContent = 'Redirecting to Google…';
+      showToast('Google sign-in is starting…', 'success');
     } catch (error) {
       showSignedOut(); authStatus.className = 'status error'; authStatus.textContent = error instanceof Error ? error.message : 'Unable to sign in.';
+      showToast(authStatus.textContent, 'error');
     } finally { button.disabled = false; }
   });
   document.querySelector('#sign-out').addEventListener('click', async () => {
     const button = document.querySelector('#sign-out');
     button.disabled = true;
+    showToast('Signing out of this dashboard…', 'info');
     try {
       if (authClient) {
         const result = await authClient.auth.signOut({ scope: 'local' });
         if (result.error) throw result.error;
       }
       showSignedOut(); authStatus.className = 'status'; authStatus.textContent = 'Signed out of the dashboard; the mobile app remains signed in.';
+      showToast('Signed out of the dashboard. The mobile app remains signed in.', 'success');
     } catch (error) {
       authStatus.className = 'status error'; authStatus.textContent = error instanceof Error ? error.message : 'Unable to sign out.';
+      showToast(authStatus.textContent, 'error');
     } finally {
       button.disabled = false;
     }
   });
-  async function loadMetrics({ silent = false } = {}) {
+  async function loadMetrics({ silent = false, manual = false } = {}) {
     if (requestInFlight) return;
     requestInFlight = true;
+    if (manual) showToast('Refreshing dashboard…', 'info');
     if (!silent) {
       refreshButton.disabled = true;
       status.className = 'status';
@@ -362,6 +385,7 @@
         showSignedOut();
         authStatus.className = 'status error';
         authStatus.textContent = 'Your session has ended. Continue with Google to sign in again.';
+        if (manual) showToast(authStatus.textContent, 'error');
         return;
       }
       const response = await fetch(apiBaseUrl + '/analytics/report', { headers: { Authorization: 'Bearer ' + session.access_token } });
@@ -392,6 +416,7 @@
       dashboard.hidden = false;
       status.className = 'status';
       status.textContent = 'Updated at ' + new Date().toLocaleTimeString() + '. Refreshes automatically every minute.';
+      if (manual) showToast('Dashboard refreshed.', 'success');
     } catch (error) {
       if (!silent) {
         setCollectionStatus(null);
@@ -399,12 +424,13 @@
       }
       status.className = 'status error';
       status.textContent = (silent ? 'Automatic refresh failed: ' : '') + (error instanceof Error ? error.message : 'Unable to load analytics.');
+      if (manual) showToast('Dashboard refresh failed. ' + (error instanceof Error ? error.message : 'Please try again.'), 'error');
     } finally {
       requestInFlight = false;
       refreshButton.disabled = false;
     }
   }
-  refreshButton.addEventListener('click', () => { void loadMetrics(); });
+  refreshButton.addEventListener('click', () => { void loadMetrics({ manual: true }); });
   showSignedOut();
   restoreSession().catch((error) => {
     authStatus.className = 'status error';

@@ -14,14 +14,23 @@ session access token, and renders only aggregates. Metrics load on session
 restore and refresh every 60 seconds while the page is visible. Sign-out uses
 the local Supabase session scope and clears the dashboard.
 
-The dashboard does not currently collect device IDs or live-session markers,
-so it displays active device count as unavailable rather than estimating it.
+The dashboard displays an approximate active app-session count from temporary,
+anonymous foreground markers held in API memory. A signed-in app sends a marker
+while it is open in the foreground and renews it periodically; markers expire
+after two minutes. The count is not a count of unique users or devices, and it
+does not record Home as a usage mode. If the app is on Home but the count stays
+at zero, its marker or heartbeat may not be reaching the API. Product events
+such as selected modes appear separately after the related action occurs.
 
-Before publication, configure the Pages source to the repository branch/path
-that serves this directory. Before use, separately deploy the API route,
-durable telemetry mount, owner-sub allowlist, and privacy-approved analytics
-feature flag. Add this exact URL to the Supabase Auth redirect allowlist before
-using Google sign-in:
+The dashboard refreshes aggregate metrics automatically every 60 seconds while
+visible. Manual refresh, sign-in, sign-out, and errors show on-screen feedback.
+The temporary session count remains ephemeral and is not linked to an account
+or stable device identifier.
+
+The live dashboard is served from the GitHub Pages URL above. The API must be
+configured with the owner allowlist and analytics collection must be enabled
+for approved testing. Add this exact URL to the Supabase Auth redirect allowlist
+for Google sign-in:
 
 `https://fredrock007.github.io/quaptureiq-site/analytics-dashboard/`
 
