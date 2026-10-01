@@ -65,6 +65,13 @@
     .ops-card { min-height:8rem; }
     .ops-card .metric { font-size:1.5rem; }
     .ops-card .hint { margin:.35rem 0 0; font-size:.78rem; }
+    .coverage-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:.75rem; }
+    .coverage-item { padding:.85rem; border:1px solid var(--line); border-radius:.75rem; background:#fff; }
+    .coverage-item strong { display:block; margin-bottom:.25rem; }
+    .coverage-item p { margin:.25rem 0 0; font-size:.86rem; }
+    .coverage-state { display:inline-block; margin-bottom:.25rem; color:#145c3a; font-size:.75rem; font-weight:800; letter-spacing:.04em; text-transform:uppercase; }
+    .coverage-state[data-state="partial"] { color:#765100; }
+    .coverage-state[data-state="unavailable"] { color:#596273; }
     .trend-chart { width:100%; min-height:220px; overflow:visible; }
     .trend-chart polyline { fill:none; stroke-width:3; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:1200; stroke-dashoffset:1200; animation:trend-draw 3.2s ease-in-out forwards; }
     .trend-p50 { stroke:#20a9bb; }.trend-p95 { stroke:#6751c8; }.trend-p99 { stroke:#d18b0b; }
@@ -78,7 +85,7 @@
     .comparison-note { margin:.35rem 0 0; color:var(--muted); font-size:.82rem; }
     footer { margin-top:1.5rem; color:var(--muted); font-size:.85rem; }
     @media (prefers-reduced-motion: reduce) { .trend-chart polyline { animation:none; stroke-dashoffset:0; } }
-    @media (max-width:760px) { form,.grid,.ops-grid,.comparison-grid { grid-template-columns:1fr; } form button { grid-column:auto; } .incident { grid-template-columns:1fr; } }
+    @media (max-width:760px) { form,.grid,.ops-grid,.coverage-grid,.comparison-grid { grid-template-columns:1fr; } form button { grid-column:auto; } .incident { grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
@@ -142,7 +149,15 @@
       <div class="card ops-card"><div class="muted">Supabase query latency / connections</div><div id="ops-database" class="metric">Not connected</div><p id="ops-database-note" class="hint">Connect native database metrics to show these values</p></div>
       <div class="card ops-card"><div class="muted">Disk read / write I/O</div><div id="ops-disk-io" class="metric">Not connected</div><p class="hint">Host-level I/O metrics are not yet available</p></div>
     </div>
-    <section class="card section"><h2>Alert thresholds</h2><p class="hint">Green means no known threshold is crossed. Yellow: p95 ≥ 1 s, HTTP 5xx &gt; 1%, CPU ≥ 70%, memory ≥ 75%, filesystem ≥ 80%, or analytics queue ≥ 75%. Red: p95 ≥ 3 s, HTTP 5xx &gt; 5%, CPU ≥ 85%, memory ≥ 90%, filesystem ≥ 90%, or queue ≥ 90%. Error thresholds require at least 10 requests. Database, host-level CPU/RAM and disk I/O are currently unavailable, so the overall banner remains “Monitoring incomplete” until those sources are connected.</p></section>
+    <section class="card section"><h2>Alert thresholds</h2><p class="hint">Threshold colors apply only to connected measurements. A missing feed is shown as unavailable and keeps the overall status at “Monitoring incomplete.” Yellow: p95 ≥ 1 s, HTTP 5xx &gt; 1%, CPU ≥ 70%, memory ≥ 75%, filesystem ≥ 80%, or analytics queue ≥ 75%. Red: p95 ≥ 3 s, HTTP 5xx &gt; 5%, CPU ≥ 85%, memory ≥ 90%, filesystem ≥ 90%, or queue ≥ 90%. Error thresholds require at least 10 requests.</p></section>
+    <section id="telemetry-coverage" class="card section" aria-labelledby="coverage-heading"><h2 id="coverage-heading">What this dashboard currently monitors</h2><p class="hint">This is the current collection status, so unavailable measurements are not mistaken for zero or healthy readings.</p><div class="coverage-grid">
+      <article class="coverage-item"><span class="coverage-state" data-state="connected">Connected · five-minute window</span><strong>API requests</strong><p>p50/p95/p99 latency, request rate, HTTP errors, and requests in progress. The bounded in-memory history resets when the API restarts.</p></article>
+      <article class="coverage-item"><span class="coverage-state" data-state="connected">Connected</span><strong>API container</strong><p>Container CPU, memory, network throughput, and the filesystem visible to the container.</p></article>
+      <article class="coverage-item"><span class="coverage-state" data-state="partial">Partial</span><strong>App activity</strong><p>Timestamped product events and a short-lived active-session count are available. Session markers expire after two minutes and are not unique-user totals.</p></article>
+      <article class="coverage-item"><span class="coverage-state" data-state="unavailable">Unavailable</span><strong>Supabase database</strong><p>Database query latency and active database connections are not connected to this dashboard.</p></article>
+      <article class="coverage-item"><span class="coverage-state" data-state="unavailable">Unavailable</span><strong>Host resources and disk I/O</strong><p>Host-wide CPU, RAM, and disk read/write rates are not available. Container readings do not replace host readings.</p></article>
+      <article class="coverage-item"><span class="coverage-state" data-state="partial">Policy gap</span><strong>Sampling and retention</strong><p>Successful-request sampling is not enabled. Telemetry SQLite currently defaults to 90-day retention; 48-hour raw retention and seven-day hourly rollups are not configured.</p></article>
+    </div><p class="hint">This panel reports existing coverage; it does not change telemetry collection or storage.</p></section>
     <section class="card section"><h2>API latency trend</h2><p class="hint">Five-minute rolling percentiles, sampled when this dashboard refreshes.</p>
       <svg id="latency-trend" class="trend-chart" viewBox="0 0 800 220" role="img" aria-label="API latency percentiles trend">
         <polyline id="trend-p50" class="trend-p50" points=""></polyline><polyline id="trend-p95" class="trend-p95" points=""></polyline><polyline id="trend-p99" class="trend-p99" points=""></polyline>

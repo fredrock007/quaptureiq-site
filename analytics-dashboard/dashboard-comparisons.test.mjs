@@ -34,6 +34,16 @@ assert.match(html, /Sign out of dashboard/);
 assert.match(html, /does not sign you out of the QuaptureIQ mobile app/);
 assert.match(html, /Image uploaded from device/);
 assert.match(html, /Q Lens from Home/);
+assert.match(html, /id="telemetry-coverage"/);
+assert.match(html, /What this dashboard currently monitors/);
+assert.match(html, /Successful-request sampling is not enabled/);
+assert.match(html, /90-day retention/);
+assert.match(html, /48-hour raw retention and seven-day hourly rollups are not configured/);
+assert.match(html, /Supabase database/);
+assert.match(html, /Host resources and disk I\/O/);
+assert.match(html, /keeps the overall status at “Monitoring incomplete\.”/);
+assert.match(html, /\.coverage-grid/);
+assert.match(html, /@media \(max-width:760px\).*coverage-grid/);
 
 assert.match(html, /counts\s*\|\|\s*\{\}/);
 assert.match(html, /Math\.round\(Number\(count\) \* 1000 \/ total\)/);
