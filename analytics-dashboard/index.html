@@ -38,14 +38,14 @@
     button { cursor:pointer; color:#fff; border-color:var(--violet); background:var(--violet); font-weight:700; }
     button:disabled { cursor:wait; opacity:.65; }
     .status { min-height:1.5rem; margin:.75rem 0 0; font-size:.9rem; }
+    .error { color:#a33b3b; }
+    .hint { font-size:.85rem; }
     .toast { position:fixed; z-index:1000; left:50%; bottom:calc(1rem + env(safe-area-inset-bottom)); width:max-content; max-width:min(90vw,36rem); transform:translateX(-50%); padding:.8rem 1rem; border-radius:.85rem; color:#fff; background:#302765; box-shadow:0 12px 32px #11152b35; font-weight:700; }
     .toast[data-kind="error"] { background:#8c343d; }
     .toast[data-kind="success"] { background:#276747; }
     .toast[hidden] { display:none; }
-    .error { color:#a33b3b; }
     @media (prefers-reduced-motion: no-preference) { .toast:not([hidden]) { animation:toast-in .18s ease-out both; } }
     @keyframes toast-in { from { opacity:0; translate:0 .4rem; } to { opacity:1; translate:0 0; } }
-    .hint { font-size:.85rem; }
     .grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-top:1.5rem; }
     .card { padding:1rem; }
     .metric { font-size:2rem; font-weight:800; }
@@ -56,11 +56,29 @@
     th { color:var(--muted); font-size:.82rem; }
     .bar { height:.55rem; min-width:2px; border-radius:99px; background:linear-gradient(90deg,var(--violet),var(--cyan)); }
     .empty { color:var(--muted); padding:1rem 0; }
+    .ops-status { margin-top:1.5rem; padding:1rem 1.2rem; border:2px solid #8b93a4; border-radius:1rem; background:#f2f4f8; color:#35405a; }
+    .ops-status strong { display:block; font-size:1.35rem; }
+    .ops-status[data-level="operational"] { border-color:#168b51; background:#effaf3; color:#145c3a; }
+    .ops-status[data-level="degraded"],.ops-status[data-level="monitoring_incomplete"] { border-color:#d18b0b; background:#fff8e8; color:#765100; }
+    .ops-status[data-level="major_outage"] { border-color:#c23838; background:#fff0f0; color:#8c2020; }
+    .ops-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-top:1rem; }
+    .ops-card { min-height:8rem; }
+    .ops-card .metric { font-size:1.5rem; }
+    .ops-card .hint { margin:.35rem 0 0; font-size:.78rem; }
+    .trend-chart { width:100%; min-height:220px; overflow:visible; }
+    .trend-chart polyline { fill:none; stroke-width:3; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:1200; stroke-dashoffset:1200; animation:trend-draw 3.2s ease-in-out forwards; }
+    .trend-p50 { stroke:#20a9bb; }.trend-p95 { stroke:#6751c8; }.trend-p99 { stroke:#d18b0b; }
+    @keyframes trend-draw { to { stroke-dashoffset:0; } }
+    .incident-list { display:grid; gap:.75rem; }
+    .incident { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:.5rem 1rem; padding:.85rem; border:1px solid var(--line); border-radius:.75rem; background:#fff; }
+    .incident strong { color:#922b2b; }.incident p { margin:.15rem 0; }.incident button { min-width:11rem; align-self:center; }
+    .event-table-wrap { overflow-x:auto; }
     .comparison-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:1rem; margin-top:1.5rem; }
     .comparison-grid .section { margin-top:0; }
     .comparison-note { margin:.35rem 0 0; color:var(--muted); font-size:.82rem; }
     footer { margin-top:1.5rem; color:var(--muted); font-size:.85rem; }
-    @media (max-width:760px) { form,.grid,.comparison-grid { grid-template-columns:1fr; } form button { grid-column:auto; } }
+    @media (prefers-reduced-motion: reduce) { .trend-chart polyline { animation:none; stroke-dashoffset:0; } }
+    @media (max-width:760px) { form,.grid,.ops-grid,.comparison-grid { grid-template-columns:1fr; } form button { grid-column:auto; } .incident { grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
@@ -106,12 +124,38 @@
   </section>
 
   <section id="dashboard" hidden>
+    <section id="ops-status" class="ops-status" data-level="monitoring_incomplete" role="status" aria-live="polite">
+      <strong id="ops-status-title">Monitoring incomplete</strong>
+      <span id="ops-status-note">Waiting for a fresh operational snapshot.</span>
+      <span id="ops-sampled-at" class="hint"></span>
+    </section>
+    <div class="ops-grid" aria-label="System health metrics">
+      <div class="card ops-card"><div class="muted">API p50 / p95 / p99</div><div id="ops-latency" class="metric">Unavailable</div><p class="hint">Last five minutes · route-aggregated</p></div>
+      <div class="card ops-card"><div class="muted">Request rate</div><div id="ops-rps" class="metric">Unavailable</div><p class="hint">Requests per second, last five minutes</p></div>
+      <div class="card ops-card"><div class="muted">API requests in progress</div><div id="ops-inflight" class="metric">Unavailable</div><p class="hint">Current concurrency · capacity limit not configured</p></div>
+      <div class="card ops-card"><div class="muted">HTTP 5xx rate</div><div id="ops-errors" class="metric">Unavailable</div><p id="ops-errors-note" class="hint">Server errors / total requests</p></div>
+      <div class="card ops-card"><div class="muted">API container CPU</div><div id="ops-cpu" class="metric">Unavailable</div><p class="hint">Percent of configured CPU limit</p></div>
+      <div class="card ops-card"><div class="muted">API container memory</div><div id="ops-memory" class="metric">Unavailable</div><p id="ops-memory-note" class="hint">Usage / configured limit</p></div>
+      <div class="card ops-card"><div class="muted">Telemetry filesystem</div><div id="ops-disk" class="metric">Unavailable</div><p id="ops-disk-note" class="hint">Usage and remaining capacity</p></div>
+      <div class="card ops-card"><div class="muted">Container network</div><div id="ops-network" class="metric">Unavailable</div><p class="hint">Inbound / outbound throughput</p></div>
+      <div class="card ops-card"><div class="muted">Product analytics queue</div><div id="ops-queue" class="metric">Unavailable</div><p id="ops-queue-note" class="hint">Pending / capacity · dropped events</p></div>
+      <div class="card ops-card"><div class="muted">Supabase query latency / connections</div><div id="ops-database" class="metric">Not connected</div><p id="ops-database-note" class="hint">Connect native database metrics to show these values</p></div>
+      <div class="card ops-card"><div class="muted">Disk read / write I/O</div><div id="ops-disk-io" class="metric">Not connected</div><p class="hint">Host-level I/O metrics are not yet available</p></div>
+    </div>
+    <section class="card section"><h2>Alert thresholds</h2><p class="hint">Green means no known threshold is crossed. Yellow: p95 ≥ 1 s, HTTP 5xx &gt; 1%, CPU ≥ 70%, memory ≥ 75%, filesystem ≥ 80%, or analytics queue ≥ 75%. Red: p95 ≥ 3 s, HTTP 5xx &gt; 5%, CPU ≥ 85%, memory ≥ 90%, filesystem ≥ 90%, or queue ≥ 90%. Error thresholds require at least 10 requests. Database, host-level CPU/RAM and disk I/O are currently unavailable, so the overall banner remains “Monitoring incomplete” until those sources are connected.</p></section>
+    <section class="card section"><h2>API latency trend</h2><p class="hint">Five-minute rolling percentiles, sampled when this dashboard refreshes.</p>
+      <svg id="latency-trend" class="trend-chart" viewBox="0 0 800 220" role="img" aria-label="API latency percentiles trend">
+        <polyline id="trend-p50" class="trend-p50" points=""></polyline><polyline id="trend-p95" class="trend-p95" points=""></polyline><polyline id="trend-p99" class="trend-p99" points=""></polyline>
+      </svg><p id="trend-legend" class="hint">p50 · p95 · p99. Trend history resets if the API restarts.</p>
+    </section>
+    <section class="card section"><h2>Recent system incidents</h2><div id="incident-feed" class="incident-list"><div class="empty">No recent errors.</div></div></section>
+    <section class="card section"><h2>Recent timestamped product activity</h2><div id="recent-events" class="event-table-wrap empty">No events recorded.</div></section>
     <div class="grid">
       <div class="card"><div class="muted">Answers requested</div><div id="requested" class="metric">—</div></div>
       <div class="card"><div class="muted">Answers succeeded</div><div id="succeeded" class="metric">—</div></div>
       <div class="card"><div class="muted">Answers failed</div><div id="failed" class="metric">—</div></div>
       <div class="card"><div class="muted">Average duration</div><div id="duration" class="metric">—</div></div>
-      <div class="card"><div class="muted">Active app sessions</div><div id="active-devices" class="metric">—</div><p class="hint">This temporary count includes signed-in app sessions with a successful foreground marker or heartbeat in the last 2 minutes. It is not a unique-user or unique-device count. If you are on Home but this stays at 0, the app marker may not be reaching the API. Home is not a usage mode; mode totals update after you select a mode. Markers stay in API memory and are not linked to accounts or stable device IDs.</p></div>
+      <div class="card"><div class="muted">Active app sessions</div><div id="active-devices" class="metric">—</div><p id="active-observed-at" class="hint">Sample time unavailable</p><p class="hint">This count includes signed-in app sessions with a successful foreground marker or heartbeat in the last 2 minutes. It is not a unique-user or unique-device count. If you are on Home but this stays at 0, the app marker may not be reaching the API. Home is not a usage mode; mode totals update after you select a mode. Markers stay in API memory and are not linked to accounts or stable device IDs.</p></div>
     </div>
 
     <section class="card section"><h2>Usage by mode</h2><div id="modes" class="empty">No data in this window.</div></section>
@@ -129,8 +173,8 @@
   </section>
 
   <footer>Private owner dashboard. GitHub Pages contains no analytics data, credentials, or private API keys.</footer>
-</main>
 <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+</main>
 <script src="./vendor/supabase-js-2.117.2.js" integrity="sha384-WgXwGL6fUsYJWNaKJgVbrJKGRQwc1vieh2oy4kw9nXqpNDz3tdSsqEYUgeHD/NuF" crossorigin="anonymous"></script>
 <script>
   const supabaseLibrarySources = [
@@ -201,6 +245,121 @@
   const number = (value) => Number(value || 0).toLocaleString();
   const sum = (obj) => Object.values(obj || {}).reduce((a, b) => a + Number(b || 0), 0);
   const safe = (value) => String(value).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const localTimestamp = (value) => {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? 'Time unavailable' : date.toLocaleString(undefined, {
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit',
+    });
+  };
+  function renderTrend(history) {
+    const points = (history || []).slice(-60);
+    const series = ['p50_ms', 'p95_ms', 'p99_ms'];
+    const values = points.flatMap((sample) => series.map((key) => Number(sample.requests?.[key] || 0)));
+    const maximum = Math.max(1, ...values);
+    series.forEach((key) => {
+      const coordinates = points.map((sample, index) => {
+        const x = 30 + (points.length <= 1 ? 0 : index * 740 / (points.length - 1));
+        const value = Number(sample.requests?.[key] || 0);
+        const y = 195 - (value / maximum) * 165;
+        return x.toFixed(1) + ',' + y.toFixed(1);
+      }).join(' ');
+      const line = document.querySelector('#trend-' + key.split('_')[0]);
+      if (typeof line.setAttribute === 'function') line.setAttribute('points', coordinates);
+    });
+    document.querySelector('#trend-legend').textContent = points.length
+      ? 'p50 · p95 · p99 · scale 0–' + number(Math.round(maximum)) + ' ms · ' + points.length + ' samples'
+      : 'Latency trend will appear as samples are collected.';
+  }
+  function renderIncidents(items) {
+    const target = document.querySelector('#incident-feed');
+    if (!Array.isArray(items) || !items.length) {
+      target.innerHTML = '<div class="empty">No recent errors in the last five minutes.</div>';
+      return;
+    }
+    target.innerHTML = items.map((item, index) => {
+      const affected = item.affected_users === null
+        ? 'Impact count unavailable (request was not associated with an authenticated account).'
+        : number(item.affected_users) + ' users' + (item.affected_percent === null ? '' : ' · ' + item.affected_percent + '% of observed users');
+      return '<article class="incident"><div><strong>' + safe(item.technical_code) + ' · ' + safe(item.error) + '</strong>' +
+        '<p><time datetime="' + safe(item.timestamp) + '" title="' + safe(item.timestamp) + '">' + safe(localTimestamp(item.timestamp)) + '</time> · ' + safe(item.route) + '</p>' +
+        '<p>Impacted: ' + safe(affected) + '</p><p>Next step: ' + safe(item.next_step) + '</p></div>' +
+        '<button type="button" data-copy-incident="' + index + '">Copy incident details</button></article>';
+    }).join('');
+    target.querySelectorAll('[data-copy-incident]').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const item = items[Number(button.dataset.copyIncident)];
+        const affected = item.affected_users === null
+          ? 'Unavailable (not authenticated)'
+          : number(item.affected_users) + ' users' + (item.affected_percent === null ? '' : ' / ' + item.affected_percent + '% of observed users');
+        const text = [
+          'QuaptureIQ incident',
+          'Timestamp (UTC): ' + new Date(item.timestamp).toISOString(),
+          'Error: ' + item.error,
+          'Technical code: ' + item.technical_code,
+          'Affected users: ' + affected,
+          'Route: ' + item.route,
+          'Suggested next step: ' + item.next_step,
+        ].join('\n');
+        try { await navigator.clipboard.writeText(text); button.textContent = 'Copied'; }
+        catch (_) { button.textContent = 'Copy unavailable'; }
+        window.setTimeout(() => { button.textContent = 'Copy incident details'; }, 2500);
+      });
+    });
+  }
+  function renderEvents(items) {
+    const target = document.querySelector('#recent-events');
+    if (!Array.isArray(items) || !items.length) {
+      target.innerHTML = '<div class="empty">No timestamped events recorded.</div>';
+      return;
+    }
+    target.innerHTML = '<table><thead><tr><th>Time (local)</th><th>Event</th><th>Mode</th><th>Detail</th></tr></thead><tbody>' +
+      items.map((event) => {
+        const detail = event.failure_stage ? 'Failure stage: ' + friendlyLabel(event.failure_stage)
+          : event.duration_ms !== null ? number(event.duration_ms) + ' ms'
+          : event.input_source ? friendlyLabel(event.input_source) : '—';
+        return '<tr><td><time datetime="' + safe(event.occurred_at) + '" title="' + safe(event.occurred_at) + '">' + safe(localTimestamp(event.occurred_at)) + '</time></td>' +
+          '<td>' + safe(friendlyLabel(event.event_name)) + '</td><td>' + safe(friendlyLabel(event.mode || '—')) + '</td><td>' + safe(detail) + '</td></tr>';
+      }).join('') + '</tbody></table>';
+  }
+  function renderOperational(data) {
+    const banner = document.querySelector('#ops-status');
+    const title = {
+      operational: 'All Systems Operational',
+      degraded: 'Degraded Performance',
+      major_outage: 'Major Outage',
+      monitoring_incomplete: 'Monitoring incomplete',
+    }[data.status] || 'System health unavailable';
+    banner.dataset.level = data.status || 'unknown';
+    document.querySelector('#ops-status-title').textContent = title;
+    document.querySelector('#ops-status-note').textContent = data.status_note || data.data_scope || 'No health details available.';
+    document.querySelector('#ops-sampled-at').textContent = 'Last checked: ' + localTimestamp(data.sampled_at);
+    const request = data.requests || {};
+    const current = data.current || {};
+    const container = current.container || {};
+    const storage = current.storage || {};
+    const network = current.network || {};
+    const queue = data.analytics_queue || {};
+    const latency = [request.p50_ms, request.p95_ms, request.p99_ms].map((value) => value === null || value === undefined ? '—' : Math.round(value) + ' ms').join(' / ');
+    document.querySelector('#ops-latency').textContent = latency;
+    document.querySelector('#ops-rps').textContent = Number.isFinite(request.rps) ? request.rps.toFixed(3) : 'Unavailable';
+    document.querySelector('#ops-inflight').textContent = Number.isInteger(request.in_flight_requests) ? number(request.in_flight_requests) : 'Unavailable';
+    document.querySelector('#ops-errors').textContent = request.http_5xx_percent === null || request.http_5xx_percent === undefined ? 'No samples' : request.http_5xx_percent + '%';
+    document.querySelector('#ops-errors-note').textContent = number(request.http_5xx) + ' server errors / ' + number(request.request_count) + ' requests · last 5 min';
+    document.querySelector('#ops-cpu').textContent = container.cpu_percent_of_limit === undefined ? 'Unavailable' : container.cpu_percent_of_limit + '%';
+    document.querySelector('#ops-memory').textContent = container.memory_percent === undefined ? 'Unavailable' : container.memory_percent + '%';
+    document.querySelector('#ops-memory-note').textContent = container.memory_bytes === undefined ? 'Container cgroup reading unavailable' : number(Math.round(container.memory_bytes / 1048576)) + ' / ' + (container.memory_limit_bytes ? number(Math.round(container.memory_limit_bytes / 1048576)) + ' MiB' : 'no configured limit');
+    document.querySelector('#ops-disk').textContent = storage.used_percent === undefined ? 'Unavailable' : storage.used_percent + '% used';
+    document.querySelector('#ops-disk-note').textContent = storage.free_bytes === undefined ? 'Filesystem capacity unavailable' : number(Math.round(storage.free_bytes / 1073741824 * 10) / 10) + ' GiB free';
+    document.querySelector('#ops-network').textContent = network.in_bytes_per_second === undefined ? 'Sampling…' : number(Math.round(network.in_bytes_per_second)) + ' / ' + number(Math.round(network.out_bytes_per_second)) + ' B/s';
+    document.querySelector('#ops-queue').textContent = Number.isInteger(queue.depth) ? number(queue.depth) + ' / ' + number(queue.capacity) : 'Unavailable';
+    document.querySelector('#ops-queue-note').textContent = Number.isInteger(queue.dropped_events) ? number(queue.dropped_events) + ' events dropped since process start' : 'Queue counters unavailable';
+    document.querySelector('#ops-database').textContent = data.database?.available ? 'Connected' : 'Not connected';
+    document.querySelector('#ops-database-note').textContent = data.database?.reason || 'Database latency/connections are not yet integrated.';
+    document.querySelector('#ops-disk-io').textContent = data.storage_io?.available ? 'Connected' : 'Not connected';
+    renderTrend(data.history || []);
+    renderIncidents(request.incidents || []);
+  }
   const friendlyLabels = {
     question: 'Question', source_analysis: 'Source analysis', diagram_labels: 'Diagram labels', locate: 'Locate',
     scanner: 'Document scan', ordinary_photo: 'Photo taken', device_image: 'Image uploaded from device',
@@ -247,6 +406,18 @@
     dashboard.hidden = true;
     ['requested','succeeded','failed','duration'].forEach((id) => { document.querySelector('#' + id).textContent = '—'; });
     ['modes','sources','next','failures'].forEach((id) => { document.querySelector('#' + id).innerHTML = '<div class="empty">No data in this window.</div>'; });
+    ['ops-latency','ops-rps','ops-inflight','ops-errors','ops-cpu','ops-memory','ops-disk','ops-network','ops-queue'].forEach((id) => { document.querySelector('#' + id).textContent = 'Unavailable'; });
+    document.querySelector('#ops-status').dataset.level = 'unknown';
+    document.querySelector('#ops-status-title').textContent = 'System health unavailable';
+    document.querySelector('#ops-status-note').textContent = 'Sign in and refresh to load the owner report.';
+    document.querySelector('#ops-sampled-at').textContent = '';
+    document.querySelector('#incident-feed').innerHTML = '<div class="empty">No recent errors.</div>';
+    document.querySelector('#recent-events').innerHTML = '<div class="empty">No timestamped events recorded.</div>';
+    document.querySelector('#trend-legend').textContent = 'Latency trend will appear as samples are collected.';
+    ['p50','p95','p99'].forEach((key) => {
+      const line = document.querySelector('#trend-' + key);
+      if (typeof line.setAttribute === 'function') line.setAttribute('points', '');
+    });
     status.textContent = '';
   }
   function stopAutoRefresh() {
@@ -334,7 +505,6 @@
     const button = document.querySelector('#sign-in');
     if (!url || !key) return;
     button.disabled = true; authStatus.className = 'status'; authStatus.textContent = 'Signing in with Google…';
-    showToast('Opening Google sign-in…', 'info');
     try {
       window.localStorage.setItem(publicConfigStorageKey, JSON.stringify({ supabaseUrl: url, supabasePublishableKey: key }));
       authClient = authClient || await initialiseAuthClient();
@@ -354,7 +524,6 @@
   document.querySelector('#sign-out').addEventListener('click', async () => {
     const button = document.querySelector('#sign-out');
     button.disabled = true;
-    showToast('Signing out of this dashboard…', 'info');
     try {
       if (authClient) {
         const result = await authClient.auth.signOut({ scope: 'local' });
@@ -391,11 +560,14 @@
       const response = await fetch(apiBaseUrl + '/analytics/report', { headers: { Authorization: 'Bearer ' + session.access_token } });
       if (!response.ok) throw new Error('The analytics API returned HTTP ' + response.status + '.');
       const report = await response.json();
+      renderOperational(report.operational || {});
+      renderEvents(report.recent_events || []);
       const collectionEnabled = typeof report.collection_enabled === 'boolean'
         ? report.collection_enabled : null;
       setCollectionStatus(collectionEnabled);
       const activeSessions = report.active_app_sessions;
       document.querySelector('#active-devices').textContent = Number.isInteger(activeSessions) && activeSessions >= 0 ? number(activeSessions) : 'Not available';
+      document.querySelector('#active-observed-at').textContent = 'Sampled at ' + localTimestamp(report.snapshot_at);
       const requested = sum(report.answer_requests_by_mode), succeeded = sum(report.answer_successes_by_mode), failed = sum(report.answer_failures_by_mode);
       document.querySelector('#requested').textContent = number(requested);
       document.querySelector('#succeeded').textContent = number(succeeded);
@@ -415,7 +587,7 @@
       comparison(document.querySelector('#comparison-role'), comparisons.user_role, collectionEnabled);
       dashboard.hidden = false;
       status.className = 'status';
-      status.textContent = 'Updated at ' + new Date().toLocaleTimeString() + '. Refreshes automatically every minute.';
+      status.textContent = 'Updated at ' + localTimestamp(report.snapshot_at) + '. Refreshes automatically every minute.';
       if (manual) showToast('Dashboard refreshed.', 'success');
     } catch (error) {
       if (!silent) {
