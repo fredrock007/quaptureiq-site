@@ -191,6 +191,7 @@
 <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
 </main>
 <script src="./vendor/supabase-js-2.117.2.js" integrity="sha384-WgXwGL6fUsYJWNaKJgVbrJKGRQwc1vieh2oy4kw9nXqpNDz3tdSsqEYUgeHD/NuF" crossorigin="anonymous"></script>
+<script src="./config.production.js"></script>
 <script>
   const supabaseLibrarySources = [
     'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2',
@@ -233,7 +234,26 @@
   const publicConfigStorageKey = 'qaptureiq-analytics-public-config';
   let storedConfig = {};
   try { storedConfig = JSON.parse(window.localStorage.getItem(publicConfigStorageKey) || '{}'); } catch (_) { storedConfig = {}; }
-  const apiBaseUrl = (configured.apiBaseUrl || 'https://84.12.79.38').replace(/\/+$/, '');
+  const productionOrigin = 'https://fredrock007.github.io';
+  const productionApiConfigLoaded = window.location.origin !== productionOrigin ||
+    window.QAPTURE_ANALYTICS_PRODUCTION_API_CONFIG_LOADED === true;
+  function resolveApiBaseUrl(value, pageHref) {
+    if (typeof value !== 'string' || !value.trim()) return '';
+    let api, page;
+    try { api = new URL(value.trim()); page = new URL(pageHref); } catch (_) { return ''; }
+    if (api.username || api.password || api.search || api.hash || !['', '/'].includes(api.pathname)) return '';
+    if (page.origin === productionOrigin && api.origin !== 'https://quaptureiq-api.duckdns.org') return '';
+    const host = api.hostname.toLowerCase().replace(/^\[|\]$/g, '');
+    const isLocalHost = host === 'localhost' || host.endsWith('.localhost') || host.endsWith('.local') ||
+      host === '::1' || host === '0.0.0.0' || /^127\./.test(host);
+    if (api.protocol !== 'https:' || isLocalHost) return '';
+    return api.origin;
+  }
+  const apiBaseUrl = resolveApiBaseUrl(
+    productionApiConfigLoaded ? configured.apiBaseUrl : '',
+    window.location.href,
+  );
+  const apiBaseUrlError = apiBaseUrl ? '' : 'Dashboard API configuration is missing or not permitted.';
   document.querySelector('#supabase-url').value = configured.supabaseUrl || storedConfig.supabaseUrl || '';
   document.querySelector('#supabase-key').value = configured.supabasePublishableKey || storedConfig.supabasePublishableKey || '';
   const authForm = document.querySelector('#auth-form');
@@ -572,6 +592,7 @@
         if (manual) showToast(authStatus.textContent, 'error');
         return;
       }
+      if (!apiBaseUrl) throw new Error(apiBaseUrlError);
       const response = await fetch(apiBaseUrl + '/analytics/report', { headers: { Authorization: 'Bearer ' + session.access_token } });
       if (!response.ok) throw new Error('The analytics API returned HTTP ' + response.status + '.');
       const report = await response.json();

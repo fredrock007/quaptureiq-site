@@ -5,6 +5,7 @@ import { test } from 'node:test';
 import vm from 'node:vm';
 
 const html = await readFile(new URL('./index.html', import.meta.url), 'utf8');
+const productionConfigSource = await readFile(new URL('./config.production.js', import.meta.url), 'utf8');
 const pageScript = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)]
   .map((match) => match[1])
   .find((script) => script.includes('supabaseLibrarySources'));
@@ -16,6 +17,8 @@ function runDashboard(loadBehavior, {
   session = null,
   report = {},
   storedConfig = null,
+  productionConfigLoaded = true,
+  configuredApiBaseUrl = 'https://quaptureiq-api.duckdns.org',
 } = {}) {
   const elements = new Map();
   const requestedScripts = [];
@@ -55,7 +58,13 @@ function runDashboard(loadBehavior, {
   const context = {
     console,
     document,
-    location: { href: 'https://fredrock007.github.io/quaptureiq-site/analytics-dashboard/' },
+    URL,
+    location: {
+      href: 'https://fredrock007.github.io/quaptureiq-site/analytics-dashboard/',
+      origin: 'https://fredrock007.github.io',
+    },
+    QAPTURE_ANALYTICS_CONFIG: { apiBaseUrl: configuredApiBaseUrl },
+    QAPTURE_ANALYTICS_PRODUCTION_API_CONFIG_LOADED: productionConfigLoaded,
     localStorage: {
       getItem(key) {
         return key === 'qaptureiq-analytics-public-config' && storedConfig
@@ -81,7 +90,7 @@ function runDashboard(loadBehavior, {
       if (intervals[id - 1]) intervals[id - 1].cleared = true;
     },
     async fetch(url, options) {
-      assert.equal(url, 'https://84.12.79.38/analytics/report');
+      assert.equal(url, 'https://quaptureiq-api.duckdns.org/analytics/report');
       assert.equal(options.headers.Authorization, 'Bearer test-access-token');
       fetchRequests.push({ url, options });
       return { ok: true, async json() { return report; } };
@@ -120,6 +129,56 @@ function runDashboard(loadBehavior, {
   elements.get('supabase-key').value = 'sb_publishable_test_key';
   return { context, elements, oauthCalls, requestedScripts, fetchRequests, intervals, toastTimers, client };
 }
+
+test('production API overlay is origin-scoped and preserves existing public Supabase settings', () => {
+  const production = {
+    location: { origin: 'https://fredrock007.github.io' },
+    QAPTURE_ANALYTICS_CONFIG: {
+      supabaseUrl: 'https://project.example.supabase.co',
+      supabasePublishableKey: 'sb_publishable_test_key',
+      redirectTo: 'https://fredrock007.github.io/quaptureiq-site/analytics-dashboard/',
+    },
+  };
+  production.window = production;
+  vm.createContext(production);
+  vm.runInContext(productionConfigSource, production, { timeout: 1000 });
+  assert.equal(production.QAPTURE_ANALYTICS_CONFIG.apiBaseUrl, 'https://quaptureiq-api.duckdns.org');
+  assert.equal(production.QAPTURE_ANALYTICS_CONFIG.supabaseUrl, 'https://project.example.supabase.co');
+  assert.equal(production.QAPTURE_ANALYTICS_CONFIG.supabasePublishableKey, 'sb_publishable_test_key');
+  assert.equal(production.QAPTURE_ANALYTICS_CONFIG.redirectTo, 'https://fredrock007.github.io/quaptureiq-site/analytics-dashboard/');
+  assert.equal(production.QAPTURE_ANALYTICS_PRODUCTION_API_CONFIG_LOADED, true);
+
+  const qa = {
+    location: { origin: 'http://127.0.0.1:4177' },
+    QAPTURE_ANALYTICS_CONFIG: { apiBaseUrl: 'http://127.0.0.1:18080' },
+  };
+  qa.window = qa;
+  vm.createContext(qa);
+  vm.runInContext(productionConfigSource, qa, { timeout: 1000 });
+  assert.equal(qa.QAPTURE_ANALYTICS_CONFIG.apiBaseUrl, 'http://127.0.0.1:18080');
+  assert.equal(qa.QAPTURE_ANALYTICS_PRODUCTION_API_CONFIG_LOADED, undefined);
+});
+
+test('does not issue report requests when production API configuration is missing or invalid', async () => {
+  for (const settings of [
+    { productionConfigLoaded: false, configuredApiBaseUrl: 'https://quaptureiq-api.duckdns.org' },
+    { productionConfigLoaded: true, configuredApiBaseUrl: 'http://quaptureiq-api.duckdns.org' },
+    { productionConfigLoaded: true, configuredApiBaseUrl: 'https://84.12.79.38' },
+  ]) {
+    const app = runDashboard(() => assert.fail('local SDK should avoid a CDN request'), {
+      localSdkAvailable: true,
+      session: { access_token: 'test-access-token' },
+      storedConfig: {
+        supabaseUrl: 'https://project.example.supabase.co',
+        supabasePublishableKey: 'sb_publishable_test_key',
+      },
+      ...settings,
+    });
+    await new Promise((resolve) => setImmediate(resolve));
+    assert.equal(app.fetchRequests.length, 0);
+    assert.match(app.elements.get('status').textContent, /API configuration is missing or not permitted/);
+  }
+});
 
 test('uses the locally vendored pinned Supabase client and starts Google OAuth', async () => {
   assert.match(html, /<script src="\.\/vendor\/supabase-js-2\.117\.2\.js" integrity="sha384-[^"]+" crossorigin="anonymous"><\/script>/);
