@@ -51,6 +51,9 @@
     .metric { font-size:2rem; font-weight:800; }
     .muted { color:var(--muted); }
     .section { margin-top:1.5rem; padding:1rem; }
+    .timing-summary-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:1rem; }
+    .timing-summary h3 { margin:.1rem 0 .5rem; font-size:1rem; }
+    .timing-summary p { margin:.35rem 0; }
     table { width:100%; border-collapse:collapse; }
     th,td { text-align:left; padding:.7rem .5rem; border-bottom:1px solid var(--line); }
     th { color:var(--muted); font-size:.82rem; }
@@ -65,6 +68,27 @@
     .ops-card { min-height:8rem; }
     .ops-card .metric { font-size:1.5rem; }
     .ops-card .hint { margin:.35rem 0 0; font-size:.78rem; }
+    .telemetry-status { margin:.4rem 0 0; color:var(--muted); font-size:.78rem; }
+    .ops-heading { display:flex; align-items:center; gap:.65rem; margin-top:1.5rem; }
+    .ops-heading h2 { margin:0; }
+    .threshold-info { position:relative; }
+    .threshold-info summary { display:grid; place-items:center; width:2rem; height:2rem; border:1px solid #8992a3; border-radius:50%; color:#30384a; background:#fff; cursor:pointer; font-weight:800; list-style:none; }
+    .threshold-info summary::-webkit-details-marker { display:none; }
+    .threshold-info summary:focus-visible { outline:3px solid #6751c8; outline-offset:2px; }
+    .threshold-info[open] .threshold-copy { position:absolute; z-index:5; top:2.35rem; left:0; width:min(32rem,85vw); padding:1rem; border:1px solid var(--line); border-radius:.75rem; background:#fff; color:var(--navy); box-shadow:0 8px 24px #18213a25; }
+    .threshold-copy p { margin:0; }
+    .failure-card[data-has-failures="true"] { border:1px solid #bd4a50; background:#fff1f1; color:#76232a; }
+    .failure-card[data-has-failures="true"] .muted,.failure-card[data-has-failures="true"] .telemetry-status { color:#76232a; }
+    .session-count { color:#35405a; border:2px solid #8992a3; background:#f2f4f8; }
+    .session-count[data-level="green"] { color:#145c3a; border-color:#168b51; background:#effaf3; }
+    .session-count[data-level="orange"] { color:#765100; border-color:#d18b0b; background:#fff8e8; }
+    .session-count[data-level="red"],.session-count[data-level="red-pulse"] { color:#8c2020; border-color:#c23838; background:#fff0f0; }
+    .session-count[data-level="black"] { color:#fff; border-color:#111; background:#111; }
+    .session-count[data-level="black"] .muted,.session-count[data-level="black"] .hint,.session-count[data-level="black"] .telemetry-status { color:#fff; }
+    .session-count[data-level="red-pulse"] { animation: session-pulse 2.8s ease-in-out infinite; }
+    @keyframes session-pulse { 50% { box-shadow:0 0 0 4px #c2383825; } }
+    @media (prefers-reduced-motion:reduce) { .session-count[data-level="red-pulse"] { animation:none; } }
+    .trend-chart-wrap { width:100%; overflow-x:auto; }
     .coverage-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:.75rem; }
     .coverage-item { padding:.85rem; border:1px solid var(--line); border-radius:.75rem; background:#fff; }
     .coverage-item strong { display:block; margin-bottom:.25rem; }
@@ -72,20 +96,22 @@
     .coverage-state { display:inline-block; margin-bottom:.25rem; color:#145c3a; font-size:.75rem; font-weight:800; letter-spacing:.04em; text-transform:uppercase; }
     .coverage-state[data-state="partial"] { color:#765100; }
     .coverage-state[data-state="unavailable"] { color:#596273; }
-    .trend-chart { width:100%; min-height:220px; overflow:visible; }
-    .trend-chart polyline { fill:none; stroke-width:3; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:1200; stroke-dashoffset:1200; animation:trend-draw 3.2s ease-in-out forwards; }
-    .trend-p50 { stroke:#20a9bb; }.trend-p95 { stroke:#6751c8; }.trend-p99 { stroke:#d18b0b; }
+    .trend-chart { display:block; height:320px; max-width:none; }
+    .trend-series { fill:none; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; }
+    .trend-p50 { stroke:#087f8c; }.trend-p95 { stroke:#6045b5; stroke-dasharray:9 5; }.trend-p99 { stroke:#a96900; stroke-dasharray:2 5; }
+    .trend-axis,.trend-grid { stroke:#8992a3; stroke-width:1; }.trend-grid { stroke:#dfe3eb; stroke-dasharray:3 4; }
+    .trend-tick { fill:#475066; font:12px system-ui,sans-serif; }.trend-axis-title { fill:#252a38; font:600 14px system-ui,sans-serif; }
+    .trend-mark { fill:none; stroke-width:2.5; }.trend-marker-p50 { stroke:#087f8c; }.trend-marker-p95 { stroke:#6045b5; }.trend-marker-p99 { stroke:#a96900; }
     @keyframes trend-draw { to { stroke-dashoffset:0; } }
     .incident-list { display:grid; gap:.75rem; }
     .incident { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:.5rem 1rem; padding:.85rem; border:1px solid var(--line); border-radius:.75rem; background:#fff; }
-    .incident strong { color:#922b2b; }.incident p { margin:.15rem 0; }.incident button { min-width:11rem; align-self:center; }
+    .incident strong { color:#922b2b; }.incident p { margin:.15rem 0; }.incident-actions { display:flex; gap:.5rem; align-items:center; }.incident-actions button { min-width:8rem; }
     .event-table-wrap { overflow-x:auto; }
     .comparison-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:1rem; margin-top:1.5rem; }
     .comparison-grid .section { margin-top:0; }
     .comparison-note { margin:.35rem 0 0; color:var(--muted); font-size:.82rem; }
     footer { margin-top:1.5rem; color:var(--muted); font-size:.85rem; }
-    @media (prefers-reduced-motion: reduce) { .trend-chart polyline { animation:none; stroke-dashoffset:0; } }
-    @media (max-width:760px) { form,.grid,.ops-grid,.coverage-grid,.comparison-grid { grid-template-columns:1fr; } form button { grid-column:auto; } .incident { grid-template-columns:1fr; } }
+    @media (max-width:760px) { form,.grid,.ops-grid,.coverage-grid,.comparison-grid,.timing-summary-grid { grid-template-columns:1fr; } form button { grid-column:auto; } .incident { grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
@@ -99,12 +125,14 @@
     <h2 id="auth-heading">Owner sign-in</h2>
     <p class="hint">Continue with Google using the existing QuaptureIQ Supabase project. Google passwords are handled by Google and never enter this page. The dashboard uses only the public Supabase client configuration; it never contains a service-role key.</p>
     <form id="auth-form" class="auth-form">
+      <div id="supabase-manual-config">
       <label>Supabase project URL
         <input id="supabase-url" type="url" placeholder="https://your-project.supabase.co" autocomplete="url" required>
       </label>
       <label>Supabase publishable key
         <input id="supabase-key" type="text" placeholder="Public client key" autocomplete="off" required>
       </label>
+      </div>
       <button id="sign-in" type="submit">Continue with Google</button>
     </form>
     <div id="auth-status" class="status" role="status" aria-live="polite"></div>
@@ -136,54 +164,60 @@
       <span id="ops-status-note">Waiting for a fresh operational snapshot.</span>
       <span id="ops-sampled-at" class="hint"></span>
     </section>
+    <div class="ops-heading"><h2>System health</h2><details class="threshold-info"><summary aria-label="Alert threshold information" aria-controls="threshold-info-content" title="Alert threshold information">i</summary><div id="threshold-info-content" class="threshold-copy" role="note"><p>Yellow: p95 ≥ 1 s, HTTP 5xx &gt; 1%, CPU ≥ 70%, memory ≥ 75%, filesystem ≥ 80%, or analytics queue ≥ 75%. Red: p95 ≥ 3 s, HTTP 5xx &gt; 5%, CPU ≥ 85%, memory ≥ 90%, filesystem ≥ 90%, or queue ≥ 90%. Error thresholds require at least 10 requests. These are alert thresholds, not service-capacity guarantees. Supabase and host disk feeds are connected only after the server configures and samples them.</p></div></details></div>
     <div class="ops-grid" aria-label="System health metrics">
-      <div class="card ops-card"><div class="muted">API p50 / p95 / p99</div><div id="ops-latency" class="metric">Unavailable</div><p class="hint">Last five minutes · route-aggregated</p></div>
-      <div class="card ops-card"><div class="muted">Request rate</div><div id="ops-rps" class="metric">Unavailable</div><p class="hint">Requests per second, last five minutes</p></div>
-      <div class="card ops-card"><div class="muted">API requests in progress</div><div id="ops-inflight" class="metric">Unavailable</div><p class="hint">Current concurrency · capacity limit not configured</p></div>
-      <div class="card ops-card"><div class="muted">HTTP 5xx rate</div><div id="ops-errors" class="metric">Unavailable</div><p id="ops-errors-note" class="hint">Server errors / total requests</p></div>
-      <div class="card ops-card"><div class="muted">API container CPU</div><div id="ops-cpu" class="metric">Unavailable</div><p class="hint">Percent of configured CPU limit</p></div>
-      <div class="card ops-card"><div class="muted">API container memory</div><div id="ops-memory" class="metric">Unavailable</div><p id="ops-memory-note" class="hint">Usage / configured limit</p></div>
-      <div class="card ops-card"><div class="muted">Telemetry filesystem</div><div id="ops-disk" class="metric">Unavailable</div><p id="ops-disk-note" class="hint">Usage and remaining capacity</p></div>
-      <div class="card ops-card"><div class="muted">Container network</div><div id="ops-network" class="metric">Unavailable</div><p class="hint">Inbound / outbound throughput</p></div>
-      <div class="card ops-card"><div class="muted">Product analytics queue</div><div id="ops-queue" class="metric">Unavailable</div><p id="ops-queue-note" class="hint">Pending / capacity · dropped events</p></div>
-      <div class="card ops-card"><div class="muted">Supabase query latency / connections</div><div id="ops-database" class="metric">Not connected</div><p id="ops-database-note" class="hint">Connect native database metrics to show these values</p></div>
-      <div class="card ops-card"><div class="muted">Disk read / write I/O</div><div id="ops-disk-io" class="metric">Not connected</div><p class="hint">Host-level I/O metrics are not yet available</p></div>
+      <div class="card ops-card"><div class="muted">API p50 / p95 / p99</div><div id="ops-latency" class="metric">Unavailable</div><p class="hint">Last five minutes · route-aggregated</p><p id="ops-latency-status" class="telemetry-status">Unavailable</p></div>
+      <div class="card ops-card"><div class="muted">Request rate</div><div id="ops-rps" class="metric">Unavailable</div><p class="hint">Requests per second, last five minutes</p><p id="ops-rps-status" class="telemetry-status">Unavailable</p></div>
+      <div class="card ops-card"><div class="muted">API requests in progress</div><div id="ops-inflight" class="metric">Unavailable</div><p class="hint">Current concurrency · capacity limit not configured</p><p id="ops-inflight-status" class="telemetry-status">Unavailable</p></div>
+      <div class="card ops-card"><div class="muted">HTTP 5xx rate</div><div id="ops-errors" class="metric">Unavailable</div><p id="ops-errors-note" class="hint">Server errors / total requests</p><p id="ops-errors-status" class="telemetry-status">Unavailable</p></div>
+      <div class="card ops-card"><div class="muted">API container CPU</div><div id="ops-cpu" class="metric">Unavailable</div><p id="ops-cpu-note" class="hint">CPU percentage not provided</p><p id="ops-cpu-status" class="telemetry-status">Unavailable</p></div>
+      <div class="card ops-card"><div class="muted">API container memory</div><div id="ops-memory" class="metric">Unavailable</div><p id="ops-memory-note" class="hint">Usage / configured limit</p><p id="ops-memory-status" class="telemetry-status">Unavailable</p></div>
+      <div class="card ops-card"><div class="muted">Telemetry filesystem</div><div id="ops-disk" class="metric">Unavailable</div><p id="ops-disk-note" class="hint">Usage and remaining capacity</p><p id="ops-disk-status" class="telemetry-status">Unavailable</p></div>
+      <div class="card ops-card"><div class="muted">Container network</div><div id="ops-network" class="metric">Unavailable</div><p class="hint">Inbound / outbound throughput</p><p id="ops-network-status" class="telemetry-status">Unavailable</p></div>
+      <div class="card ops-card"><div class="muted">Product analytics queue</div><div id="ops-queue" class="metric">Unavailable</div><p id="ops-queue-note" class="hint">Pending / capacity · dropped events</p><p id="ops-queue-status" class="telemetry-status">Unavailable</p></div>
+      <div class="card ops-card"><div class="muted">Supabase metrics API / connections</div><div id="ops-database" class="metric">Not connected</div><p id="ops-database-note" class="hint">Server-side Supabase Metrics API feed</p><p id="ops-database-status" class="telemetry-status">Unavailable</p></div>
+      <div class="card ops-card"><div class="muted">Node disk read / write I/O</div><div id="ops-disk-io" class="metric">Not connected</div><p id="ops-disk-io-note" class="hint">Node block-device throughput exposed to the API container</p><p id="ops-disk-io-status" class="telemetry-status">Unavailable</p></div>
     </div>
-    <section class="card section"><h2>Alert thresholds</h2><p class="hint">Threshold colors apply only to connected measurements. A missing feed is shown as unavailable and keeps the overall status at “Monitoring incomplete.” Yellow: p95 ≥ 1 s, HTTP 5xx &gt; 1%, CPU ≥ 70%, memory ≥ 75%, filesystem ≥ 80%, or analytics queue ≥ 75%. Red: p95 ≥ 3 s, HTTP 5xx &gt; 5%, CPU ≥ 85%, memory ≥ 90%, filesystem ≥ 90%, or queue ≥ 90%. Error thresholds require at least 10 requests.</p></section>
     <section id="telemetry-coverage" class="card section" aria-labelledby="coverage-heading"><h2 id="coverage-heading">What this dashboard currently monitors</h2><p class="hint">This is the current collection status, so unavailable measurements are not mistaken for zero or healthy readings.</p><div class="coverage-grid">
-      <article class="coverage-item"><span class="coverage-state" data-state="connected">Connected · five-minute window</span><strong>API requests</strong><p>p50/p95/p99 latency, request rate, HTTP errors, and requests in progress. The bounded in-memory history resets when the API restarts.</p></article>
-      <article class="coverage-item"><span class="coverage-state" data-state="connected">Connected</span><strong>API container</strong><p>Container CPU, memory, network throughput, and the filesystem visible to the container.</p></article>
-      <article class="coverage-item"><span class="coverage-state" data-state="partial">Partial</span><strong>App activity</strong><p>Timestamped product events and a short-lived active-session count are available. Session markers expire after two minutes and are not unique-user totals.</p></article>
-      <article class="coverage-item"><span class="coverage-state" data-state="unavailable">Unavailable</span><strong>Supabase database</strong><p>Database query latency and active database connections are not connected to this dashboard.</p></article>
-      <article class="coverage-item"><span class="coverage-state" data-state="unavailable">Unavailable</span><strong>Host resources and disk I/O</strong><p>Host-wide CPU, RAM, and disk read/write rates are not available. Container readings do not replace host readings.</p></article>
+      <article class="coverage-item"><span class="coverage-state" data-state="connected">API-backed · five-minute window</span><strong>API requests</strong><p>p50/p95/p99 latency, request rate, HTTP errors, and requests in progress. The bounded in-memory history resets when the API restarts.</p></article>
+      <article class="coverage-item"><span class="coverage-state" data-state="connected">API fields · container scope</span><strong>API container</strong><p>Container CPU, memory, network throughput, and the filesystem visible to the container.</p></article>
+      <article class="coverage-item"><span class="coverage-state" data-state="partial">Short-lived markers</span><strong>App activity</strong><p>Timestamped product events and a short-lived active-session count are reported when available. Session markers expire after two minutes and are not unique-user totals.</p></article>
+      <article class="coverage-item"><span id="coverage-database-status" class="telemetry-status" data-state="unknown" role="status" aria-live="polite">Report status unavailable</span><strong>Supabase metrics</strong><p>The API reports whether its server-side Supabase Metrics API feed is configured and available. Connection counts and metrics-request latency appear when supplied; this is not database query latency.</p></article>
+      <article class="coverage-item"><span id="coverage-host-io-status" class="telemetry-status" data-state="unknown" role="status" aria-live="polite">Report status unavailable</span><strong>Host resources and disk I/O</strong><p>Host-wide CPU and RAM are not available. Disk read/write rates appear only when the API provides usable storage_io samples; container readings do not replace host readings.</p></article>
       <article class="coverage-item"><span class="coverage-state" data-state="partial">Policy gap</span><strong>Sampling and retention</strong><p>Successful-request sampling is not enabled. Telemetry SQLite currently defaults to 90-day retention; 48-hour raw retention and seven-day hourly rollups are not configured.</p></article>
     </div><p class="hint">This panel reports existing coverage; it does not change telemetry collection or storage.</p></section>
-    <section class="card section"><h2>API latency trend</h2><p class="hint">Five-minute rolling percentiles, sampled when this dashboard refreshes.</p>
-      <svg id="latency-trend" class="trend-chart" viewBox="0 0 800 220" role="img" aria-label="API latency percentiles trend">
-        <polyline id="trend-p50" class="trend-p50" points=""></polyline><polyline id="trend-p95" class="trend-p95" points=""></polyline><polyline id="trend-p99" class="trend-p99" points=""></polyline>
-      </svg><p id="trend-legend" class="hint">p50 · p95 · p99. Trend history resets if the API restarts.</p>
+    <section class="card section"><h2>API latency trend</h2><p class="hint">Response-time percentiles use a rolling five-minute request window; a sample is recorded on each dashboard refresh.</p>
+      <div class="trend-chart-wrap"><svg id="latency-trend" class="trend-chart" viewBox="0 0 800 320" role="img" aria-label="API latency percentiles trend">
+        <g id="trend-gridlines"></g><g id="trend-axis-labels"></g>
+        <text class="trend-axis-title" x="18" y="145" text-anchor="middle" transform="rotate(-90 18 145)">Response time (ms)</text>
+        <text class="trend-axis-title" x="400" y="312" text-anchor="middle">Time</text>
+        <polyline id="trend-p50" class="trend-series trend-p50" points=""></polyline><polyline id="trend-p95" class="trend-series trend-p95" points=""></polyline><polyline id="trend-p99" class="trend-series trend-p99" points=""></polyline>
+        <g id="trend-markers-p50"></g><g id="trend-markers-p95"></g><g id="trend-markers-p99"></g>
+      </svg></div>
+      <p id="trend-legend" class="hint" aria-live="polite">p50 · p95 · p99 · waiting for samples</p>
     </section>
-    <section class="card section"><h2>Recent system incidents</h2><div id="incident-feed" class="incident-list"><div class="empty">No recent errors.</div></div></section>
+    <section class="card section"><h2>Recent system incidents</h2><p class="hint">Incident history is retained for 48 hours. Dashboard metrics continue to refresh every minute.</p><div id="incident-feed" class="incident-list"><div class="empty">No incidents recorded in the last 48 hours.</div></div></section>
     <section class="card section"><h2>Recent timestamped product activity</h2><div id="recent-events" class="event-table-wrap empty">No events recorded.</div></section>
+    <section class="card section"><h2>How long answers take to appear</h2><p class="hint"><strong>Time until answer appears on phone:</strong> client-measured from answer submission until the parsed result is visible in its first rendered frame. This is separate from API request latency. Summaries use recorded observations in the API's 90-day retention; they do not prove continuous collection coverage.</p><p id="answer-display-coverage" class="telemetry-status">Timing coverage unavailable</p><div id="answer-display-summary-status" class="telemetry-status" role="status" aria-live="polite">Timing summaries unavailable</div><div id="answer-display-summaries" class="timing-summary-grid"></div><h3>Recent completed answers</h3><div id="answer-display-timings" class="event-table-wrap empty" aria-live="polite">No completed answer timings recorded.</div></section>
     <div class="grid">
       <div class="card"><div class="muted">Answers requested</div><div id="requested" class="metric">—</div></div>
       <div class="card"><div class="muted">Answers succeeded</div><div id="succeeded" class="metric">—</div></div>
-      <div class="card"><div class="muted">Answers failed</div><div id="failed" class="metric">—</div></div>
+      <div id="failed-card" class="card failure-card" data-has-failures="false"><div class="muted">Answers failed</div><div id="failed" class="metric">—</div><p id="failed-note" class="telemetry-status">Failure count unavailable</p></div>
       <div class="card"><div class="muted">Average duration</div><div id="duration" class="metric">—</div></div>
-      <div class="card"><div class="muted">Active app sessions</div><div id="active-devices" class="metric">—</div><p id="active-observed-at" class="hint">Sample time unavailable</p><p class="hint">This count includes signed-in app sessions with a successful foreground marker or heartbeat in the last 2 minutes. It is not a unique-user or unique-device count. If you are on Home but this stays at 0, the app marker may not be reaching the API. Home is not a usage mode; mode totals update after you select a mode. Markers stay in API memory and are not linked to accounts or stable device IDs.</p></div>
+      <div id="active-session-card" class="card session-count" data-level="neutral"><div class="muted">Active app sessions</div><div id="active-devices" class="metric">—</div><p id="active-session-state" class="telemetry-status" role="status" aria-live="polite">Session count unavailable</p><p id="active-observed-at" class="hint">Sample time unavailable</p><p id="active-capacity-note" class="telemetry-status">Display bands are visual only; they are not capacity, safety, or outage limits.</p><p class="hint">This count includes signed-in app sessions with a successful foreground marker or heartbeat in the last 2 minutes. It is not a unique-user or unique-device count. If you are on Home but this stays at 0, the app marker may not be reaching the API. Home is not a usage mode; mode totals update after you select a mode. Markers stay in API memory and are not linked to accounts or stable device IDs.</p></div>
     </div>
 
-    <section class="card section"><h2>Usage by mode</h2><div id="modes" class="empty">No data in this window.</div></section>
-    <section class="card section"><h2>Input source</h2><div id="sources" class="empty">No data in this window.</div></section>
-    <section class="card section"><h2>Answer-next usage</h2><div id="next" class="empty">No data in this window.</div></section>
-    <section class="card section"><h2>Normalized failure stages</h2><div id="failures" class="empty">No data in this window.</div></section>
+    <section class="card section"><h2>Usage by mode</h2><div id="modes" class="empty">No data in this window.</div><p id="collector-usage-by-mode" class="telemetry-status">Unavailable</p></section>
+    <section class="card section"><h2>Input source</h2><div id="sources" class="empty">No data in this window.</div><p id="collector-input-source" class="telemetry-status">Unavailable</p></section>
+    <section class="card section"><h2>Answer-next usage</h2><div id="next" class="empty">No data in this window.</div><p id="collector-answer-next" class="telemetry-status">Unavailable</p></section>
+    <section class="card section"><h2>Normalized failure stages</h2><div id="failures" class="empty">No data in this window.</div><p id="collector-failure-stages" class="telemetry-status">Unavailable</p></section>
     <section class="comparison-grid" aria-label="Product comparisons">
-      <section class="card section"><h2>Plan tier</h2><div id="comparison-plan" class="empty">No data in this window.</div><p class="comparison-note">University is not included because it is reserved, not an active entitlement.</p></section>
-      <section class="card section"><h2>Selected voice</h2><div id="comparison-voice" class="empty">No data in this window.</div></section>
-      <section class="card section"><h2>Image input</h2><div id="comparison-input" class="empty">No data in this window.</div></section>
-      <section class="card section"><h2>Entry route</h2><div id="comparison-route" class="empty">No data in this window.</div></section>
-      <section class="card section"><h2>Sign-in method</h2><div id="comparison-signin" class="empty">No data in this window.</div></section>
-      <section class="card section"><h2>User role</h2><div id="comparison-role" class="empty">No data recorded. The app does not currently record an explicit user-selected role.</div></section>
+      <section class="card section"><h2>Plan tier</h2><div id="comparison-plan" class="empty">No data in this window.</div><p id="collector-plan-tier" class="telemetry-status">Unavailable</p><p class="comparison-note">University is not included because it is reserved, not an active entitlement.</p></section>
+      <section class="card section"><h2>Selected voice</h2><div id="comparison-voice" class="empty">No data in this window.</div><p id="collector-selected-voice" class="telemetry-status">Unavailable</p></section>
+      <section class="card section"><h2>Image input</h2><div id="comparison-input" class="empty">No data in this window.</div><p id="collector-image-input" class="telemetry-status">Unavailable</p></section>
+      <section class="card section"><h2>Entry route</h2><div id="comparison-route" class="empty">No data in this window.</div><p id="collector-entry-route" class="telemetry-status">Unavailable</p></section>
+      <section class="card section"><h2>Sign-in method</h2><div id="comparison-signin" class="empty">No data in this window.</div><p id="collector-sign-in-method" class="telemetry-status">Unavailable</p></section>
+      <section class="card section"><h2>User role</h2><div id="comparison-role" class="empty">No data in this window. The app does not currently record an explicit user-selected role.</div><p id="collector-user-role" class="telemetry-status">Unavailable</p></section>
     </section>
   </section>
 
@@ -235,18 +269,15 @@
   let storedConfig = {};
   try { storedConfig = JSON.parse(window.localStorage.getItem(publicConfigStorageKey) || '{}'); } catch (_) { storedConfig = {}; }
   const productionOrigin = 'https://fredrock007.github.io';
-  const productionApiConfigLoaded = window.location.origin !== productionOrigin ||
+  const productionApiBase = 'https://quaptureiq-api.duckdns.org';
+  const productionApiConfigLoaded = window.location.origin === productionOrigin &&
     window.QAPTURE_ANALYTICS_PRODUCTION_API_CONFIG_LOADED === true;
   function resolveApiBaseUrl(value, pageHref) {
     if (typeof value !== 'string' || !value.trim()) return '';
     let api, page;
     try { api = new URL(value.trim()); page = new URL(pageHref); } catch (_) { return ''; }
     if (api.username || api.password || api.search || api.hash || !['', '/'].includes(api.pathname)) return '';
-    if (page.origin === productionOrigin && api.origin !== 'https://quaptureiq-api.duckdns.org') return '';
-    const host = api.hostname.toLowerCase().replace(/^\[|\]$/g, '');
-    const isLocalHost = host === 'localhost' || host.endsWith('.localhost') || host.endsWith('.local') ||
-      host === '::1' || host === '0.0.0.0' || /^127\./.test(host);
-    if (api.protocol !== 'https:' || isLocalHost) return '';
+    if (page.origin !== productionOrigin || api.origin !== productionApiBase || api.protocol !== 'https:') return '';
     return api.origin;
   }
   const apiBaseUrl = resolveApiBaseUrl(
@@ -254,8 +285,11 @@
     window.location.href,
   );
   const apiBaseUrlError = apiBaseUrl ? '' : 'Dashboard API configuration is missing or not permitted.';
-  document.querySelector('#supabase-url').value = configured.supabaseUrl || storedConfig.supabaseUrl || '';
-  document.querySelector('#supabase-key').value = configured.supabasePublishableKey || storedConfig.supabasePublishableKey || '';
+  const configuredSupabaseUrl = configured.supabaseUrl || storedConfig.supabaseUrl || '';
+  const configuredPublishableKey = configured.supabasePublishableKey || storedConfig.supabasePublishableKey || '';
+  document.querySelector('#supabase-url').value = configuredSupabaseUrl;
+  document.querySelector('#supabase-key').value = configuredPublishableKey;
+  document.querySelector('#supabase-manual-config').hidden = Boolean(configuredSupabaseUrl && configuredPublishableKey);
   const authForm = document.querySelector('#auth-form');
   const authStatus = document.querySelector('#auth-status');
   const connection = document.querySelector('#connection');
@@ -287,29 +321,78 @@
       hour: '2-digit', minute: '2-digit', second: '2-digit',
     });
   };
+  const trendTimeLabel = (value) => {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? 'Time unavailable' : date.toLocaleTimeString(undefined, {
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+    });
+  };
+  const svgSafe = (value) => safe(value);
   function renderTrend(history) {
     const points = (history || []).slice(-60);
-    const series = ['p50_ms', 'p95_ms', 'p99_ms'];
-    const values = points.flatMap((sample) => series.map((key) => Number(sample.requests?.[key] || 0)));
-    const maximum = Math.max(1, ...values);
-    series.forEach((key) => {
-      const coordinates = points.map((sample, index) => {
-        const x = 30 + (points.length <= 1 ? 0 : index * 740 / (points.length - 1));
-        const value = Number(sample.requests?.[key] || 0);
-        const y = 195 - (value / maximum) * 165;
-        return x.toFixed(1) + ',' + y.toFixed(1);
-      }).join(' ');
-      const line = document.querySelector('#trend-' + key.split('_')[0]);
+    const series = [
+      { key: 'p50_ms', name: 'p50', marker: 'circle' },
+      { key: 'p95_ms', name: 'p95', marker: 'square' },
+      { key: 'p99_ms', name: 'p99', marker: 'diamond' },
+    ];
+    const values = points.flatMap((sample) => series.map(({ key }) => sample.requests?.[key]))
+      .filter((value) => typeof value === 'number' && Number.isFinite(value));
+    const rawMaximum = Math.max(0, ...values);
+    const roughStep = Math.max(rawMaximum / 4, 0.25);
+    const magnitude = 10 ** Math.floor(Math.log10(roughStep));
+    const normalizedStep = roughStep / magnitude;
+    const step = (normalizedStep <= 1 ? 1 : normalizedStep <= 2 ? 2 : normalizedStep <= 5 ? 5 : 10) * magnitude;
+    const axisMaximum = Math.max(step, Math.ceil(rawMaximum / step) * step);
+    const left = 76, right = 28, top = 24, bottom = 86, plotHeight = 190;
+    const plotWidth = Math.max(696, (points.length - 1) * 82);
+    const chartWidth = left + plotWidth + right;
+    const chartHeight = 320;
+    const xAt = (index) => left + (points.length <= 1 ? plotWidth / 2 : index * plotWidth / (points.length - 1));
+    const yAt = (value) => top + plotHeight - value / axisMaximum * plotHeight;
+    const chart = document.querySelector('#latency-trend');
+    if (typeof chart.setAttribute === 'function') {
+      chart.setAttribute('viewBox', `0 0 ${chartWidth} ${chartHeight}`);
+      chart.setAttribute('width', String(chartWidth));
+      chart.setAttribute('height', String(chartHeight));
+    }
+    const grid = document.querySelector('#trend-gridlines');
+    const axisLabels = document.querySelector('#trend-axis-labels');
+    const tickCount = 4;
+    grid.innerHTML = Array.from({ length: tickCount + 1 }, (_, index) => {
+      const value = axisMaximum * index / tickCount;
+      const y = yAt(value);
+      return `<line class="trend-grid" x1="${left}" y1="${y}" x2="${left + plotWidth}" y2="${y}"/><text class="trend-tick" x="${left - 10}" y="${y + 4}" text-anchor="end">${number(value)}</text>`;
+    }).join('') + `<line class="trend-axis" x1="${left}" y1="${top}" x2="${left}" y2="${top + plotHeight}"/><line class="trend-axis" x1="${left}" y1="${top + plotHeight}" x2="${left + plotWidth}" y2="${top + plotHeight}"/>`;
+    axisLabels.innerHTML = points.map((sample, index) => {
+      const x = xAt(index);
+      const label = trendTimeLabel(sample.at);
+      return `<line class="trend-axis" x1="${x}" y1="${top + plotHeight}" x2="${x}" y2="${top + plotHeight + 5}"/><text class="trend-tick" x="${x}" y="${top + plotHeight + 20}" text-anchor="end" transform="rotate(-55 ${x} ${top + plotHeight + 20})"><title>${svgSafe(localTimestamp(sample.at))}</title>${svgSafe(label)}</text>`;
+    }).join('');
+    series.forEach(({ key, name, marker }) => {
+      const valid = points.map((sample, index) => ({ sample, index, value: sample.requests?.[key] }))
+        .filter(({ value }) => typeof value === 'number' && Number.isFinite(value));
+      const coordinates = valid.map(({ index, value }) => `${xAt(index).toFixed(1)},${yAt(value).toFixed(1)}`).join(' ');
+      const line = document.querySelector('#trend-' + name);
       if (typeof line.setAttribute === 'function') line.setAttribute('points', coordinates);
+      document.querySelector('#trend-markers-' + name).innerHTML = valid.map(({ sample, index, value }) => {
+        const x = xAt(index), y = yAt(value), title = `${name} · ${localTimestamp(sample.at)} · ${String(value)} ms`;
+        const shape = marker === 'circle'
+          ? `<circle class="trend-mark trend-marker-${name}" cx="${x}" cy="${y}" r="5"/>`
+          : marker === 'square'
+            ? `<rect class="trend-mark trend-marker-${name}" x="${x - 4.5}" y="${y - 4.5}" width="9" height="9"/>`
+            : `<path class="trend-mark trend-marker-${name}" d="M ${x} ${y - 6} L ${x + 6} ${y} L ${x} ${y + 6} L ${x - 6} ${y} Z"/>`;
+        return `<g aria-label="${svgSafe(title)}" tabindex="0"><title>${svgSafe(title)}</title>${shape}</g>`;
+      }).join('');
     });
-    document.querySelector('#trend-legend').textContent = points.length
-      ? 'p50 · p95 · p99 · scale 0–' + number(Math.round(maximum)) + ' ms · ' + points.length + ' samples'
-      : 'Latency trend will appear as samples are collected.';
+    const span = points.length > 1
+      ? `${localTimestamp(points[0].at)} – ${localTimestamp(points[points.length - 1].at)}`
+      : points.length === 1 ? localTimestamp(points[0].at) : 'no time range yet';
+    document.querySelector('#trend-legend').innerHTML = `<span><i class="trend-p50" style="display:inline-block;width:1.6rem;border-top:3px solid #087f8c;vertical-align:middle"></i> p50 (circle)</span> · <span><i class="trend-p95" style="display:inline-block;width:1.6rem;border-top:3px dashed #6045b5;vertical-align:middle"></i> p95 (square)</span> · <span><i class="trend-p99" style="display:inline-block;width:1.6rem;border-top:3px dotted #a96900;vertical-align:middle"></i> p99 (diamond)</span><br>${points.length} samples · chart time window: ${svgSafe(span)} · each sample summarizes the previous five minutes`;
   }
   function renderIncidents(items) {
     const target = document.querySelector('#incident-feed');
     if (!Array.isArray(items) || !items.length) {
-      target.innerHTML = '<div class="empty">No recent errors in the last five minutes.</div>';
+      target.innerHTML = '<div class="empty">No incidents recorded in the last 48 hours.</div>';
       return;
     }
     target.innerHTML = items.map((item, index) => {
@@ -319,7 +402,9 @@
       return '<article class="incident"><div><strong>' + safe(item.technical_code) + ' · ' + safe(item.error) + '</strong>' +
         '<p><time datetime="' + safe(item.timestamp) + '" title="' + safe(item.timestamp) + '">' + safe(localTimestamp(item.timestamp)) + '</time> · ' + safe(item.route) + '</p>' +
         '<p>Impacted: ' + safe(affected) + '</p><p>Next step: ' + safe(item.next_step) + '</p></div>' +
-        '<button type="button" data-copy-incident="' + index + '">Copy incident details</button></article>';
+        '<div class="incident-actions"><button type="button" data-copy-incident="' + index + '">Copy incident details</button>' +
+        (item.incident_id ? '<button type="button" data-delete-incident="' + index + '">Delete</button>' : '') +
+        '</div></article>';
     }).join('');
     target.querySelectorAll('[data-copy-incident]').forEach((button) => {
       button.addEventListener('click', async () => {
@@ -341,6 +426,26 @@
         window.setTimeout(() => { button.textContent = 'Copy incident details'; }, 2500);
       });
     });
+    target.querySelectorAll('[data-delete-incident]').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const item = items[Number(button.dataset.deleteIncident)];
+        if (!item || !item.incident_id || !window.confirm('Delete only this incident entry from the 48-hour dashboard history? This cannot be undone.')) return;
+        button.disabled = true;
+        try {
+          const session = await currentSession();
+          if (!session) throw new Error('Your session has ended. Sign in again before deleting an incident.');
+          const response = await fetch(apiBaseUrl + '/analytics/incidents/' + encodeURIComponent(item.incident_id), {
+            method: 'DELETE', headers: { Authorization: 'Bearer ' + session.access_token },
+          });
+          if (!response.ok) throw new Error('The incident could not be deleted (HTTP ' + response.status + ').');
+          renderIncidents(items.filter((candidate) => candidate.incident_id !== item.incident_id));
+          showToast('Incident entry deleted.', 'success');
+        } catch (error) {
+          button.disabled = false;
+          showToast(error instanceof Error ? error.message : 'Unable to delete this incident.', 'error');
+        }
+      });
+    });
   }
   function renderEvents(items) {
     const target = document.querySelector('#recent-events');
@@ -356,6 +461,76 @@
         return '<tr><td><time datetime="' + safe(event.occurred_at) + '" title="' + safe(event.occurred_at) + '">' + safe(localTimestamp(event.occurred_at)) + '</time></td>' +
           '<td>' + safe(friendlyLabel(event.event_name)) + '</td><td>' + safe(friendlyLabel(event.mode || '—')) + '</td><td>' + safe(detail) + '</td></tr>';
       }).join('') + '</tbody></table>';
+  }
+  function renderAnswerDisplayTimings(items) {
+    const target = document.querySelector('#answer-display-timings');
+    const modes = new Set(['question', 'diagram_labels', 'locate', 'source_analysis']);
+    const rows = Array.isArray(items) ? items.filter((item) =>
+      item && modes.has(item.mode) && Number.isInteger(item.duration_ms) &&
+      item.duration_ms >= 0 && typeof item.occurred_at === 'string' &&
+      !Number.isNaN(new Date(item.occurred_at).getTime())
+    ) : [];
+    if (!rows.length) {
+      target.className = 'event-table-wrap empty';
+      target.textContent = 'No completed answer timings recorded.';
+      return;
+    }
+    target.className = 'event-table-wrap';
+    target.innerHTML = '<table><thead><tr><th>Mode</th><th>Time until answer appears</th><th>First displayed (local time)</th></tr></thead><tbody>' +
+      rows.map((item) => '<tr><td>' + safe(friendlyLabel(item.mode)) + '</td><td>' +
+        number(item.duration_ms) + ' ms</td><td><time datetime="' + safe(item.occurred_at) + '" title="' +
+        safe(item.occurred_at) + '">' + safe(localTimestamp(item.occurred_at)) + '</time></td></tr>').join('') +
+      '</tbody></table>';
+  }
+  function answerDurationLabel(durationMs) {
+    if (!Number.isFinite(durationMs) || durationMs < 0) return 'Unavailable';
+    if (durationMs < 1000) return Math.round(durationMs) + ' ms';
+    return (Math.round(durationMs / 10) / 100).toFixed(2) + ' s';
+  }
+  function renderAnswerDisplaySummaries(status, summary) {
+    const target = document.querySelector('#answer-display-summaries');
+    const state = document.querySelector('#answer-display-summary-status');
+    const coverage = document.querySelector('#answer-display-coverage');
+    if (!status || status.configured !== true) {
+      state.textContent = 'Phone-display timing collection is disabled for this API.';
+      coverage.textContent = 'No timing coverage is available.';
+      target.innerHTML = '';
+      return;
+    }
+    if (status.available !== true || !summary || !summary.periods) {
+      state.textContent = 'Phone-display timing summaries are unavailable.';
+      coverage.textContent = 'The API did not provide usable timing coverage metadata.';
+      target.innerHTML = '';
+      return;
+    }
+    state.textContent = 'Recorded timing observations · retention ' + number(status.retention_days) + ' days';
+    coverage.textContent = summary.observed_from_at
+      ? 'Recorded timing data observed since ' + localTimestamp(summary.observed_from_at) + '. Gaps in collection are not inferred.'
+      : 'No timing events have been observed; collection coverage has not yet been established.';
+    const periods = [
+      ['today', 'Today (South Africa time)'],
+      ['last_7_days', 'Last 7 days'],
+      ['last_30_days', 'Last 30 days'],
+    ];
+    target.innerHTML = periods.map(([key, title]) => {
+      const item = summary.periods[key];
+      if (!item || !Number.isInteger(item.completed) || item.completed < 0 ||
+          !Number.isInteger(item.failed) || item.failed < 0 ||
+          !Number.isInteger(item.cancelled) || item.cancelled < 0) {
+        return '<article class="card timing-summary"><h3>' + title + '</h3><p>Summary unavailable</p></article>';
+      }
+      const average = item.completed > 0 && Number.isFinite(item.average_duration_ms)
+        ? answerDurationLabel(item.average_duration_ms) : '—';
+      const slowest = item.completed > 0 && Number.isFinite(item.slowest_duration_ms)
+        ? answerDurationLabel(item.slowest_duration_ms) : '—';
+      const noCompletions = item.completed === 0 ? '<p>No completed answers recorded in this period.</p>' : '';
+      return '<article class="card timing-summary"><h3>' + title + '</h3>' +
+        '<p>Average display time: <strong>' + average + '</strong></p>' +
+        '<p>Recorded completed answers: ' + number(item.completed) + '</p>' +
+        '<p>Slowest recorded completed answer: ' + slowest + '</p>' +
+        '<p>Recorded failed answers: ' + number(item.failed) + '</p>' +
+        '<p>Recorded cancellations: ' + number(item.cancelled) + '</p>' + noCompletions + '</article>';
+    }).join('');
   }
   function renderOperational(data) {
     const banner = document.querySelector('#ops-status');
@@ -381,17 +556,51 @@
     document.querySelector('#ops-inflight').textContent = Number.isInteger(request.in_flight_requests) ? number(request.in_flight_requests) : 'Unavailable';
     document.querySelector('#ops-errors').textContent = request.http_5xx_percent === null || request.http_5xx_percent === undefined ? 'No samples' : request.http_5xx_percent + '%';
     document.querySelector('#ops-errors-note').textContent = number(request.http_5xx) + ' server errors / ' + number(request.request_count) + ' requests · last 5 min';
-    document.querySelector('#ops-cpu').textContent = container.cpu_percent_of_limit === undefined ? 'Unavailable' : container.cpu_percent_of_limit + '%';
-    document.querySelector('#ops-memory').textContent = container.memory_percent === undefined ? 'Unavailable' : container.memory_percent + '%';
+    const hasCpuPercent = Number.isFinite(container.cpu_percent_of_limit);
+    document.querySelector('#ops-cpu').textContent = hasCpuPercent ? container.cpu_percent_of_limit + '%' : 'No percentage sample';
+    document.querySelector('#ops-cpu-note').textContent = hasCpuPercent
+      ? 'Percent of configured CPU quota'
+      : 'The API omits CPU percent without a quota and two samples; it does not report which condition applies.';
+    const hasMemoryPercent = Number.isFinite(container.memory_percent);
+    const hasMemoryBytes = Number.isFinite(container.memory_bytes);
+    document.querySelector('#ops-memory').textContent = hasMemoryPercent
+      ? container.memory_percent + '%'
+      : hasMemoryBytes ? number(Math.round(container.memory_bytes / 1048576)) + ' MiB used' : 'Unavailable';
     document.querySelector('#ops-memory-note').textContent = container.memory_bytes === undefined ? 'Container cgroup reading unavailable' : number(Math.round(container.memory_bytes / 1048576)) + ' / ' + (container.memory_limit_bytes ? number(Math.round(container.memory_limit_bytes / 1048576)) + ' MiB' : 'no configured limit');
     document.querySelector('#ops-disk').textContent = storage.used_percent === undefined ? 'Unavailable' : storage.used_percent + '% used';
     document.querySelector('#ops-disk-note').textContent = storage.free_bytes === undefined ? 'Filesystem capacity unavailable' : number(Math.round(storage.free_bytes / 1073741824 * 10) / 10) + ' GiB free';
     document.querySelector('#ops-network').textContent = network.in_bytes_per_second === undefined ? 'Sampling…' : number(Math.round(network.in_bytes_per_second)) + ' / ' + number(Math.round(network.out_bytes_per_second)) + ' B/s';
-    document.querySelector('#ops-queue').textContent = Number.isInteger(queue.depth) ? number(queue.depth) + ' / ' + number(queue.capacity) : 'Unavailable';
+    document.querySelector('#ops-queue').textContent = Number.isInteger(queue.depth) && Number.isInteger(queue.capacity) ? number(queue.depth) + ' / ' + number(queue.capacity) : 'Unavailable';
     document.querySelector('#ops-queue-note').textContent = Number.isInteger(queue.dropped_events) ? number(queue.dropped_events) + ' events dropped since process start' : 'Queue counters unavailable';
-    document.querySelector('#ops-database').textContent = data.database?.available ? 'Connected' : 'Not connected';
-    document.querySelector('#ops-database-note').textContent = data.database?.reason || 'Database latency/connections are not yet integrated.';
-    document.querySelector('#ops-disk-io').textContent = data.storage_io?.available ? 'Connected' : 'Not connected';
+    const database = data.database || {};
+    const storageIo = data.storage_io || {};
+    document.querySelector('#ops-database').textContent = database.available === true
+      ? (Number.isInteger(database.active_connections) ? number(database.active_connections) + ' / ' + (Number.isInteger(database.max_connections) ? number(database.max_connections) : 'maximum unavailable') : 'Connection count unavailable')
+      : database.configured === false ? 'Not configured' : 'Unavailable';
+    document.querySelector('#ops-database-note').textContent = database.available
+      ? ((database.metrics_latency_ms === undefined ? 'Metrics latency unavailable' : number(database.metrics_latency_ms) + ' ms metrics request') +
+        (database.connection_percent === undefined ? '' : ' · ' + database.connection_percent + '% connections'))
+      : database.reason || 'Server-side Supabase Metrics API feed is unavailable.';
+    document.querySelector('#ops-disk-io').textContent = storageIo.available && Number.isFinite(storageIo.read_bytes_per_second) && Number.isFinite(storageIo.write_bytes_per_second)
+      ? number(Math.round(storageIo.read_bytes_per_second)) + ' / ' + number(Math.round(storageIo.write_bytes_per_second)) + ' B/s'
+      : storageIo.available ? 'Warming up' : storageIo.configured === false ? 'Not configured' : 'Unavailable';
+    const ioSourceNote = storageIo.source === 'host /proc/diskstats' ? 'API-reported source: host /proc/diskstats.' : 'Disk I/O source not reported by API.';
+    document.querySelector('#ops-disk-io-note').textContent = [storageIo.reason, ioSourceNote].filter(Boolean).join(' ');
+    const sampledAt = data.sampled_at;
+    const requestFeed = Number.isInteger(request.request_count);
+    renderMetricStatus('ops-latency-status', metricFeed(null, requestFeed, sampledAt, requestFeed && request.request_count > 0));
+    renderMetricStatus('ops-rps-status', metricFeed(null, requestFeed, sampledAt, requestFeed));
+    renderMetricStatus('ops-inflight-status', metricFeed(null, Number.isInteger(request.in_flight_requests), sampledAt, Number.isInteger(request.in_flight_requests)));
+    renderMetricStatus('ops-errors-status', metricFeed(null, requestFeed, sampledAt, requestFeed && request.request_count > 0));
+    renderMetricStatus('ops-cpu-status', metricFeed(null, hasCpuPercent, sampledAt, hasCpuPercent));
+    renderMetricStatus('ops-memory-status', metricFeed(null, container.available, sampledAt, Number.isFinite(container.memory_bytes)));
+    renderMetricStatus('ops-disk-status', metricFeed(null, storage.available, sampledAt, Number.isFinite(storage.used_percent)));
+    renderMetricStatus('ops-network-status', metricFeed(null, network.available, sampledAt, Number.isFinite(network.in_bytes_per_second)));
+    renderMetricStatus('ops-queue-status', metricFeed(null, Number.isInteger(queue.depth) && Number.isInteger(queue.capacity), sampledAt, Number.isInteger(queue.depth)));
+    renderMetricStatus('ops-database-status', metricFeed(database.configured, database.available, database.sampled_at, database.available === true));
+    renderMetricStatus('ops-disk-io-status', metricFeed(storageIo.configured, storageIo.available, storageIo.sampled_at, Number.isFinite(storageIo.read_bytes_per_second) && Number.isFinite(storageIo.write_bytes_per_second)));
+    renderMetricStatus('coverage-database-status', metricFeed(database.configured, database.available, database.sampled_at, database.available === true));
+    renderMetricStatus('coverage-host-io-status', metricFeed(storageIo.configured, storageIo.available, storageIo.sampled_at, Number.isFinite(storageIo.read_bytes_per_second) && Number.isFinite(storageIo.write_bytes_per_second)));
     renderTrend(data.history || []);
     renderIncidents(request.incidents || []);
   }
@@ -440,8 +649,18 @@
     setCollectionStatus(null);
     dashboard.hidden = true;
     ['requested','succeeded','failed','duration'].forEach((id) => { document.querySelector('#' + id).textContent = '—'; });
+    document.querySelector('#answer-display-summaries').innerHTML = '';
+    document.querySelector('#answer-display-summary-status').textContent = 'Timing summaries unavailable';
+    document.querySelector('#answer-display-coverage').textContent = 'Timing coverage unavailable';
     ['modes','sources','next','failures'].forEach((id) => { document.querySelector('#' + id).innerHTML = '<div class="empty">No data in this window.</div>'; });
-    ['ops-latency','ops-rps','ops-inflight','ops-errors','ops-cpu','ops-memory','ops-disk','ops-network','ops-queue'].forEach((id) => { document.querySelector('#' + id).textContent = 'Unavailable'; });
+    ['ops-latency','ops-rps','ops-inflight','ops-errors','ops-cpu','ops-memory','ops-disk','ops-network','ops-queue','ops-database','ops-disk-io'].forEach((id) => { document.querySelector('#' + id).textContent = 'Unavailable'; });
+    ['ops-latency-status','ops-rps-status','ops-inflight-status','ops-errors-status','ops-cpu-status','ops-memory-status','ops-disk-status','ops-network-status','ops-queue-status','ops-database-status','ops-disk-io-status','collector-usage-by-mode','collector-input-source','collector-answer-next','collector-failure-stages','collector-plan-tier','collector-selected-voice','collector-image-input','collector-entry-route','collector-sign-in-method','collector-user-role'].forEach((id) => renderTelemetryStatus(id, null));
+    document.querySelector('#failed-card').dataset.hasFailures = 'false';
+    document.querySelector('#failed-note').textContent = 'Failure count unavailable';
+    document.querySelector('#active-session-card').dataset.level = 'neutral';
+    document.querySelector('#active-observed-at').textContent = 'Sample time unavailable';
+    document.querySelector('#ops-database-note').textContent = 'Sign in and refresh to load the owner report.';
+    document.querySelector('#ops-disk-io-note').textContent = 'Sign in and refresh to load the owner report.';
     document.querySelector('#ops-status').dataset.level = 'unknown';
     document.querySelector('#ops-status-title').textContent = 'System health unavailable';
     document.querySelector('#ops-status-note').textContent = 'Sign in and refresh to load the owner report.';
@@ -452,7 +671,10 @@
     ['p50','p95','p99'].forEach((key) => {
       const line = document.querySelector('#trend-' + key);
       if (typeof line.setAttribute === 'function') line.setAttribute('points', '');
+      document.querySelector('#trend-markers-' + key).innerHTML = '';
     });
+    document.querySelector('#trend-gridlines').innerHTML = '';
+    document.querySelector('#trend-axis-labels').innerHTML = '';
     status.textContent = '';
   }
   function stopAutoRefresh() {
@@ -480,23 +702,81 @@
       }, AUTO_REFRESH_INTERVAL_MS);
     }
   }
-  function comparison(target, value, collectionEnabled) {
+  function comparison(target, value) {
     const data = value || {};
     const counts = data.counts || {};
     const total = Number(data.total || 0);
     const entries = Object.entries(counts);
     if (!entries.length) {
-      target.innerHTML = collectionEnabled === false
-        ? '<div class="empty">Collection is off; no events are being recorded.</div>'
-        : data.suppressed_small_groups
+      target.innerHTML = data.suppressed_small_groups
         ? '<div class="empty">Events exist, but groups smaller than 3 are hidden.</div>'
-        : '<div class="empty">No data recorded for this category.</div>';
+        : '<div class="empty">No data in this window.</div>';
       return;
     }
     target.innerHTML = '<table><thead><tr><th>Choice</th><th>Count</th><th>Percent</th></tr></thead><tbody>' + entries.map(([key, count]) => {
       const percent = total ? Math.round(Number(count) * 1000 / total) / 10 : 0;
       return '<tr><td>' + safe(friendlyLabel(key)) + '</td><td>' + number(count) + '</td><td>' + percent + '%</td></tr>';
     }).join('') + '</tbody></table>';
+  }
+  function telemetryStatus(entry) {
+    if (!entry || typeof entry.configured !== 'boolean' || typeof entry.available !== 'boolean') {
+      return { state: 'unavailable', label: 'Unavailable' };
+    }
+    if (!entry.configured) return { state: 'disabled', label: 'Disabled' };
+    if (!entry.available) return { state: 'unavailable', label: 'Unavailable' };
+    const lastEventAt = entry.last_successful_event_at || entry.last_received_at;
+    if (!lastEventAt) {
+      return entry.history_known === true
+        ? { state: 'ready', label: 'Ready — waiting for the first event' }
+        : { state: 'unavailable', label: 'Unavailable — prior event history is unknown' };
+    }
+    if (!entry.last_received_at) {
+      return { state: 'no-recent-data', label: 'No recent data — last received ' + localTimestamp(lastEventAt) };
+    }
+    return { state: 'receiving', label: 'Receiving data — last received ' + localTimestamp(lastEventAt) };
+  }
+  function renderTelemetryStatus(id, entry) {
+    const target = document.querySelector('#' + id);
+    const status = telemetryStatus(entry);
+    target.dataset.state = status.state;
+    target.textContent = status.label;
+  }
+  function metricFeed(configured, available, sampledAt, hasSample) {
+    return {
+      configured: typeof configured === 'boolean' ? configured : null,
+      available: typeof available === 'boolean' ? available : null,
+      sampled_at: sampledAt || null,
+      has_sample: Boolean(hasSample),
+    };
+  }
+  function metricStatus(entry) {
+    if (!entry || entry.configured === false || entry.available === false) {
+      return { state: entry && entry.configured === false ? 'disabled' : 'unavailable', label: entry && entry.configured === false ? 'Disabled' : 'Unavailable' };
+    }
+    if (entry.available !== true || !entry.sampled_at) {
+      return { state: 'unavailable', label: 'Unavailable' };
+    }
+    if (!entry.has_sample) return { state: 'ready', label: 'Ready — waiting for data' };
+    return { state: 'sampled', label: 'Sampled at ' + localTimestamp(entry.sampled_at) };
+  }
+  function renderMetricStatus(id, entry) {
+    const target = document.querySelector('#' + id);
+    const status = metricStatus(entry);
+    target.dataset.state = status.state;
+    target.textContent = status.label;
+  }
+  function activeSessionPresentation(count) {
+    if (!Number.isInteger(count) || count < 0) return { level: 'neutral', label: 'Session count unavailable' };
+    if (count === 0) return { level: 'neutral', label: 'No active sessions reported in the last 2 minutes' };
+    const formatted = number(count) + ' active session' + (count === 1 ? '' : 's');
+    if (count < 100) return { level: 'green', label: formatted + ' (green display band)' };
+    if (count < 500) return { level: 'orange', label: formatted + ' (orange display band)' };
+    if (count < 1000) return { level: 'red', label: formatted + ' (red display band)' };
+    if (count < 5000) return { level: 'black', label: formatted + ' (black display band)' };
+    return { level: 'red-pulse', label: formatted + ' (high-count visual band; not an outage signal)' };
+  }
+  function failureCardHasFailures(failedCount) {
+    return Number.isFinite(failedCount) && failedCount > 0;
   }
   async function initialiseAuthClient() {
     const url = document.querySelector('#supabase-url').value.trim();
@@ -535,6 +815,11 @@
   }
   authForm.addEventListener('submit', async (event) => {
     event.preventDefault();
+    if (!apiBaseUrl) {
+      authStatus.className = 'status error';
+      authStatus.textContent = apiBaseUrlError;
+      return;
+    }
     const url = document.querySelector('#supabase-url').value.trim();
     const key = document.querySelector('#supabase-key').value.trim();
     const button = document.querySelector('#sign-in');
@@ -584,6 +869,7 @@
       setCollectionStatus('checking');
     }
     try {
+      if (!apiBaseUrl) throw new Error(apiBaseUrlError);
       const session = await currentSession();
       if (!session) {
         showSignedOut();
@@ -592,22 +878,31 @@
         if (manual) showToast(authStatus.textContent, 'error');
         return;
       }
-      if (!apiBaseUrl) throw new Error(apiBaseUrlError);
       const response = await fetch(apiBaseUrl + '/analytics/report', { headers: { Authorization: 'Bearer ' + session.access_token } });
       if (!response.ok) throw new Error('The analytics API returned HTTP ' + response.status + '.');
       const report = await response.json();
       renderOperational(report.operational || {});
       renderEvents(report.recent_events || []);
+      renderAnswerDisplaySummaries(report.answer_display_timing_status, report.answer_display_timing_summaries);
+      renderAnswerDisplayTimings(report.answer_display_timings || []);
       const collectionEnabled = typeof report.collection_enabled === 'boolean'
         ? report.collection_enabled : null;
       setCollectionStatus(collectionEnabled);
       const activeSessions = report.active_app_sessions;
-      document.querySelector('#active-devices').textContent = Number.isInteger(activeSessions) && activeSessions >= 0 ? number(activeSessions) : 'Not available';
-      document.querySelector('#active-observed-at').textContent = 'Sampled at ' + localTimestamp(report.snapshot_at);
+      const validActiveSessions = Number.isInteger(activeSessions) && activeSessions >= 0;
+      document.querySelector('#active-devices').textContent = validActiveSessions ? number(activeSessions) : 'Not available';
+      const sessionPresentation = activeSessionPresentation(activeSessions);
+      document.querySelector('#active-session-card').dataset.level = sessionPresentation.level;
+      document.querySelector('#active-session-state').textContent = sessionPresentation.label;
+      document.querySelector('#active-observed-at').textContent = report.snapshot_at ? 'Sampled at ' + localTimestamp(report.snapshot_at) : 'Sample time unavailable';
       const requested = sum(report.answer_requests_by_mode), succeeded = sum(report.answer_successes_by_mode), failed = sum(report.answer_failures_by_mode);
       document.querySelector('#requested').textContent = number(requested);
       document.querySelector('#succeeded').textContent = number(succeeded);
       document.querySelector('#failed').textContent = number(failed);
+      document.querySelector('#failed-card').dataset.hasFailures = String(failureCardHasFailures(failed));
+      document.querySelector('#failed-note').textContent = requested > 0
+        ? number(failed) + ' failed of ' + number(requested) + ' requested · ' + (100 * failed / requested).toFixed(1) + '% failure rate'
+        : number(failed) + ' failed of 0 requested · failure rate unavailable';
       document.querySelector('#duration').textContent = number(Math.round(report.average_answer_duration_ms || 0)) + ' ms';
       const modes = ['question','source_analysis','diagram_labels','locate'];
       document.querySelector('#modes').innerHTML = '<table><thead><tr><th>Mode</th><th>Requested</th><th>Succeeded</th><th>Failed</th></tr></thead><tbody>' + modes.map((mode) => '<tr><td>' + safe(friendlyLabel(mode)) + '</td><td>' + number((report.answer_requests_by_mode || {})[mode]) + '</td><td>' + number((report.answer_successes_by_mode || {})[mode]) + '</td><td>' + number((report.answer_failures_by_mode || {})[mode]) + '</td></tr>').join('') + '</tbody></table>';
@@ -615,12 +910,20 @@
       rows(document.querySelector('#next'), report.answer_next_question_by_mode, sum(report.answer_next_question_by_mode), 'Mode');
       rows(document.querySelector('#failures'), report.failure_stages, sum(report.failure_stages), 'Failure stage');
       const comparisons = report.comparisons || {};
-      comparison(document.querySelector('#comparison-plan'), comparisons.plan_tier, collectionEnabled);
-      comparison(document.querySelector('#comparison-voice'), comparisons.selected_voice, collectionEnabled);
-      comparison(document.querySelector('#comparison-input'), comparisons.input_path, collectionEnabled);
-      comparison(document.querySelector('#comparison-route'), comparisons.entry_route, collectionEnabled);
-      comparison(document.querySelector('#comparison-signin'), comparisons.sign_in_method, collectionEnabled);
-      comparison(document.querySelector('#comparison-role'), comparisons.user_role, collectionEnabled);
+      comparison(document.querySelector('#comparison-plan'), comparisons.plan_tier);
+      comparison(document.querySelector('#comparison-voice'), comparisons.selected_voice);
+      comparison(document.querySelector('#comparison-input'), comparisons.input_path);
+      comparison(document.querySelector('#comparison-route'), comparisons.entry_route);
+      comparison(document.querySelector('#comparison-signin'), comparisons.sign_in_method);
+      comparison(document.querySelector('#comparison-role'), comparisons.user_role);
+      const categoryStatuses = report.telemetry_collection?.categories || {};
+      [
+        ['collector-usage-by-mode', 'usage_by_mode'], ['collector-input-source', 'input_source'],
+        ['collector-answer-next', 'answer_next'], ['collector-failure-stages', 'failure_stages'],
+        ['collector-plan-tier', 'plan_tier'], ['collector-selected-voice', 'selected_voice'],
+        ['collector-image-input', 'image_input'], ['collector-entry-route', 'entry_route'],
+        ['collector-sign-in-method', 'sign_in_method'], ['collector-user-role', 'user_role'],
+      ].forEach(([id, key]) => renderTelemetryStatus(id, categoryStatuses[key]));
       dashboard.hidden = false;
       status.className = 'status';
       status.textContent = 'Updated at ' + localTimestamp(report.snapshot_at) + '. Refreshes automatically every minute.';
