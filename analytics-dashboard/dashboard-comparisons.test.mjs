@@ -73,5 +73,8 @@ assert.doesNotMatch(html, /data-comparison-category="user_role"/);
 assert.match(html, /comparison_trends/);
 assert.match(html, /six-hour choice bucket meets the minimum-three privacy threshold/);
 assert.doesNotMatch(html, /session\.user\.email/);
+assert.match(html, /points\.length > 1/);
+assert.match(html, /<circle cx=/);
+assert.match(html, /comparison-chart-wrap circle/);
 
 console.log('dashboard comparison and mobile checks passed');

@@ -123,6 +123,7 @@
     .comparison-chart-wrap { width:100%; min-height:150px; overflow:auto; }
     .comparison-chart-wrap svg { width:100%; min-width:420px; height:180px; }
     .comparison-chart-wrap polyline { fill:none; stroke-width:3; stroke-linecap:round; stroke-linejoin:round; }
+    .comparison-chart-wrap circle { stroke:#0b1020; stroke-width:2; }
     .comparison-legend { display:flex; flex-wrap:wrap; gap:.6rem; color:var(--muted); font-size:.85rem; }
     .comparison-legend i { display:inline-block; width:1rem; border-top:3px solid var(--cyan); margin-right:.25rem; }
     .comparison-range-hint { margin:.35rem 0 0; color:var(--muted); font-size:.82rem; }
@@ -762,7 +763,12 @@
     const left = 24; const top = 12; const plotWidth = 680; const plotHeight = 112;
     const x = (timestamp) => left + ((timestamp - model.start) / Math.max(1, model.end - model.start)) * plotWidth;
     const y = (count) => top + plotHeight - (count / max) * plotHeight;
-    const svg = '<svg viewBox="0 0 744 180" role="img" aria-label="' + safe(label) + ' over time"><line x1="24" y1="124" x2="704" y2="124" stroke="#40536e" />' + model.series.map((series) => '<polyline points="' + series.points.map((point) => x(point.timestamp).toFixed(1) + ',' + y(point.count).toFixed(1)).join(' ') + '" stroke="' + safe(series.color) + '" />').join('') + '</svg>';
+    const svg = '<svg viewBox="0 0 744 180" role="img" aria-label="' + safe(label) + ' over time"><line x1="24" y1="124" x2="704" y2="124" stroke="#40536e" />' + model.series.map((series) => {
+      const points = series.points.map((point) => x(point.timestamp).toFixed(1) + ',' + y(point.count).toFixed(1));
+      const line = points.length > 1 ? '<polyline points="' + points.join(' ') + '" stroke="' + safe(series.color) + '" />' : '';
+      const markers = series.points.map((point) => '<circle cx="' + x(point.timestamp).toFixed(1) + '" cy="' + y(point.count).toFixed(1) + '" r="5" fill="' + safe(series.color) + '"><title>' + safe(series.label) + ': ' + number(point.count) + ' events in UTC bucket</title></circle>').join('');
+      return line + markers;
+    }).join('') + '</svg>';
     target.innerHTML = '<div class="comparison-legend" aria-label="' + safe(label) + ' chart legend">' + model.series.map((series) => '<span><i style="border-color:' + safe(series.color) + '"></i>' + safe(series.label) + '</span>').join('') + '</div><div class="comparison-chart-wrap">' + svg + '</div><p class="status">' + allPoints.length + ' visible UTC buckets</p>';
   }
   function renderComparisonCards(report) {
