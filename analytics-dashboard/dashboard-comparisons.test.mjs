@@ -66,12 +66,18 @@ assert.match(html, /quaptureiq-horizontal-logo\.png/);
 assert.match(html, /comparison-charts\.js/);
 assert.match(html, /id="comparison-range"/);
 assert.equal((html.match(/data-comparison-view="line"/g) || []).length, 5);
+assert.equal((html.match(/data-comparison-view="pie"/g) || []).length, 5);
+assert.equal((html.match(/data-comparison-view="bar"/g) || []).length, 5);
 for (const category of ['plan_tier', 'selected_voice', 'input_path', 'entry_route', 'sign_in_method']) {
   assert.match(html, new RegExp('data-comparison-category="' + category + '"'));
 }
 assert.doesNotMatch(html, /data-comparison-category="user_role"/);
 assert.match(html, /comparison_trends/);
 assert.match(html, /six-hour choice bucket meets the minimum-three privacy threshold/);
+assert.match(html, /function renderComparisonPie/);
+assert.match(html, /function renderComparisonBar/);
+assert.match(html, /comparisonViews\[spec\.category\] === 'pie'/);
+assert.match(html, /comparisonViews\[spec\.category\] === 'bar'/);
 assert.doesNotMatch(html, /session\.user\.email/);
 assert.match(html, /points\.length > 1/);
 assert.match(html, /<circle cx=/);

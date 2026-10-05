@@ -124,6 +124,14 @@
     .comparison-chart-wrap svg { width:100%; min-width:420px; height:180px; }
     .comparison-chart-wrap polyline { fill:none; stroke-width:3; stroke-linecap:round; stroke-linejoin:round; }
     .comparison-chart-wrap circle { stroke:#0b1020; stroke-width:2; }
+    .comparison-pie { width:148px; height:148px; margin:1rem auto; border-radius:50%; border:2px solid var(--line); }
+    .comparison-chart-legend { display:grid; gap:.45rem; }
+    .comparison-chart-key { display:inline-flex; align-items:center; gap:.4rem; }
+    .comparison-chart-key i { width:.75rem; height:.75rem; border-radius:50%; flex:0 0 auto; }
+    .comparison-bars { display:grid; gap:.65rem; }
+    .comparison-bar-label { display:flex; justify-content:space-between; gap:.75rem; color:var(--text); font-size:.9rem; }
+    .comparison-bar-track { height:.7rem; margin-top:.25rem; background:#182940; border-radius:999px; overflow:hidden; }
+    .comparison-bar-fill { height:100%; border-radius:inherit; }
     .comparison-legend { display:flex; flex-wrap:wrap; gap:.6rem; color:var(--muted); font-size:.85rem; }
     .comparison-legend i { display:inline-block; width:1rem; border-top:3px solid var(--cyan); margin-right:.25rem; }
     .comparison-range-hint { margin:.35rem 0 0; color:var(--muted); font-size:.82rem; }
@@ -235,11 +243,11 @@
       <label>Report window<select id="comparison-range"><option value="24">Last 24 hours</option><option value="48" selected>Last 48 hours</option></select></label>
     </section>
     <section class="comparison-grid" aria-label="Product comparisons">
-      <section class="card section"><h2>Plan tier</h2><div class="comparison-controls"><button type="button" data-comparison-category="plan_tier" data-comparison-view="table" aria-pressed="true">Table</button><button type="button" data-comparison-category="plan_tier" data-comparison-view="line" aria-pressed="false">Line chart</button></div><div id="comparison-plan" class="empty">No data in this window.</div><p id="collector-plan-tier" class="telemetry-status">Unavailable</p><p class="comparison-note">University is not included because it is reserved, not an active entitlement.</p></section>
-      <section class="card section"><h2>Selected voice</h2><div class="comparison-controls"><button type="button" data-comparison-category="selected_voice" data-comparison-view="table" aria-pressed="true">Table</button><button type="button" data-comparison-category="selected_voice" data-comparison-view="line" aria-pressed="false">Line chart</button></div><div id="comparison-voice" class="empty">No data in this window.</div><p id="collector-selected-voice" class="telemetry-status">Unavailable</p></section>
-      <section class="card section"><h2>Image input</h2><div class="comparison-controls"><button type="button" data-comparison-category="input_path" data-comparison-view="table" aria-pressed="true">Table</button><button type="button" data-comparison-category="input_path" data-comparison-view="line" aria-pressed="false">Line chart</button></div><div id="comparison-input" class="empty">No data in this window.</div><p id="collector-image-input" class="telemetry-status">Unavailable</p></section>
-      <section class="card section"><h2>Entry route</h2><div class="comparison-controls"><button type="button" data-comparison-category="entry_route" data-comparison-view="table" aria-pressed="true">Table</button><button type="button" data-comparison-category="entry_route" data-comparison-view="line" aria-pressed="false">Line chart</button></div><div id="comparison-route" class="empty">No data in this window.</div><p id="collector-entry-route" class="telemetry-status">Unavailable</p></section>
-      <section class="card section"><h2>Sign-in method</h2><div class="comparison-controls"><button type="button" data-comparison-category="sign_in_method" data-comparison-view="table" aria-pressed="true">Table</button><button type="button" data-comparison-category="sign_in_method" data-comparison-view="line" aria-pressed="false">Line chart</button></div><div id="comparison-signin" class="empty">No data in this window.</div><p id="collector-sign-in-method" class="telemetry-status">Unavailable</p></section>
+      <section class="card section"><h2>Plan tier</h2><div class="comparison-controls"><button type="button" data-comparison-category="plan_tier" data-comparison-view="table" aria-pressed="true">Table</button><button type="button" data-comparison-category="plan_tier" data-comparison-view="line" aria-pressed="false">Line</button><button type="button" data-comparison-category="plan_tier" data-comparison-view="pie" aria-pressed="false">Pie</button><button type="button" data-comparison-category="plan_tier" data-comparison-view="bar" aria-pressed="false">Bar</button></div><div id="comparison-plan" class="empty">No data in this window.</div><p id="collector-plan-tier" class="telemetry-status">Unavailable</p><p class="comparison-note">University is not included because it is reserved, not an active entitlement.</p></section>
+      <section class="card section"><h2>Selected voice</h2><div class="comparison-controls"><button type="button" data-comparison-category="selected_voice" data-comparison-view="table" aria-pressed="true">Table</button><button type="button" data-comparison-category="selected_voice" data-comparison-view="line" aria-pressed="false">Line</button><button type="button" data-comparison-category="selected_voice" data-comparison-view="pie" aria-pressed="false">Pie</button><button type="button" data-comparison-category="selected_voice" data-comparison-view="bar" aria-pressed="false">Bar</button></div><div id="comparison-voice" class="empty">No data in this window.</div><p id="collector-selected-voice" class="telemetry-status">Unavailable</p></section>
+      <section class="card section"><h2>Image input</h2><div class="comparison-controls"><button type="button" data-comparison-category="input_path" data-comparison-view="table" aria-pressed="true">Table</button><button type="button" data-comparison-category="input_path" data-comparison-view="line" aria-pressed="false">Line</button><button type="button" data-comparison-category="input_path" data-comparison-view="pie" aria-pressed="false">Pie</button><button type="button" data-comparison-category="input_path" data-comparison-view="bar" aria-pressed="false">Bar</button></div><div id="comparison-input" class="empty">No data in this window.</div><p id="collector-image-input" class="telemetry-status">Unavailable</p></section>
+      <section class="card section"><h2>Entry route</h2><div class="comparison-controls"><button type="button" data-comparison-category="entry_route" data-comparison-view="table" aria-pressed="true">Table</button><button type="button" data-comparison-category="entry_route" data-comparison-view="line" aria-pressed="false">Line</button><button type="button" data-comparison-category="entry_route" data-comparison-view="pie" aria-pressed="false">Pie</button><button type="button" data-comparison-category="entry_route" data-comparison-view="bar" aria-pressed="false">Bar</button></div><div id="comparison-route" class="empty">No data in this window.</div><p id="collector-entry-route" class="telemetry-status">Unavailable</p></section>
+      <section class="card section"><h2>Sign-in method</h2><div class="comparison-controls"><button type="button" data-comparison-category="sign_in_method" data-comparison-view="table" aria-pressed="true">Table</button><button type="button" data-comparison-category="sign_in_method" data-comparison-view="line" aria-pressed="false">Line</button><button type="button" data-comparison-category="sign_in_method" data-comparison-view="pie" aria-pressed="false">Pie</button><button type="button" data-comparison-category="sign_in_method" data-comparison-view="bar" aria-pressed="false">Bar</button></div><div id="comparison-signin" class="empty">No data in this window.</div><p id="collector-sign-in-method" class="telemetry-status">Unavailable</p></section>
       <section class="card section"><h2>User role</h2><div id="comparison-role" class="empty">Not collected. The app does not currently record an explicit user-selected role. User role is unsupported.</div><p id="collector-user-role" class="telemetry-status">Unavailable</p></section>
     </section>
   </section>
@@ -726,11 +734,15 @@
       }, AUTO_REFRESH_INTERVAL_MS);
     }
   }
-  function comparison(target, value) {
+  function comparisonModel(value) {
     const data = value || {};
     const counts = data.counts || {};
     const total = Number(data.total || 0);
     const entries = Object.entries(counts);
+    return { data, counts, total, entries };
+  }
+  function comparison(target, value) {
+    const { data, total, entries } = comparisonModel(value);
     if (!entries.length) {
       target.innerHTML = data.suppressed_small_groups
         ? '<div class="empty">Events exist, but groups smaller than 3 are hidden.</div>'
@@ -741,6 +753,28 @@
       const percent = total ? Math.round(Number(count) * 1000 / total) / 10 : 0;
       return '<tr><td>' + safe(friendlyLabel(key)) + '</td><td>' + number(count) + '</td><td>' + percent + '%</td></tr>';
     }).join('') + '</tbody></table>';
+  }
+  const comparisonColors = ['#48d9e8', '#55b8ff', '#b7a2ff', '#f3bf65', '#ff8eaa', '#81e0b1'];
+  function comparisonLegend(entries) {
+    return entries.map(([key], index) => '<span class="comparison-chart-key"><i style="background:' + comparisonColors[index % comparisonColors.length] + '"></i>' + safe(friendlyLabel(key)) + '</span>').join('');
+  }
+  function renderComparisonPie(target, value, label) {
+    const { data, total, entries } = comparisonModel(value);
+    if (!entries.length) { comparison(target, value); return; }
+    let start = 0;
+    const stops = entries.map(([key, count], index) => {
+      const end = start + (Number(count) / Math.max(1, total)) * 100;
+      const stop = comparisonColors[index % comparisonColors.length] + ' ' + start + '% ' + end + '%';
+      start = end;
+      return stop;
+    }).join(', ');
+    target.innerHTML = '<div class="comparison-pie" role="img" aria-label="' + safe(label) + ' pie chart for the selected report window" style="background:conic-gradient(' + stops + ')"></div><div class="comparison-chart-legend" aria-label="' + safe(label) + ' legend">' + comparisonLegend(entries) + '</div>';
+  }
+  function renderComparisonBar(target, value, label) {
+    const { data, entries } = comparisonModel(value);
+    if (!entries.length) { comparison(target, value); return; }
+    const max = Math.max(...entries.map(([, count]) => Number(count)), 1);
+    target.innerHTML = '<div class="comparison-bars" role="img" aria-label="' + safe(label) + ' bar chart for the selected report window">' + entries.map(([key, count], index) => '<div><div class="comparison-bar-label"><span>' + safe(friendlyLabel(key)) + '</span><strong>' + number(count) + '</strong></div><div class="comparison-bar-track"><div class="comparison-bar-fill" style="width:' + (Number(count) / max * 100) + '%;background:' + comparisonColors[index % comparisonColors.length] + '"></div></div></div>').join('') + '</div>';
   }
   const comparisonSpecs = [
     { category:'plan_tier', target:'#comparison-plan', choices:['free','student','professional'], label:'Plan tier' },
@@ -778,6 +812,8 @@
     comparisonSpecs.forEach((spec) => {
       const target = document.querySelector(spec.target);
       if (comparisonViews[spec.category] === 'line') renderComparisonLine(target, trends[spec.category], spec.choices, spec.label, reportWindow);
+      else if (comparisonViews[spec.category] === 'pie') renderComparisonPie(target, comparisons[spec.category], spec.label);
+      else if (comparisonViews[spec.category] === 'bar') renderComparisonBar(target, comparisons[spec.category], spec.label);
       else comparison(target, comparisons[spec.category]);
     });
     const role = document.querySelector('#comparison-role');
