@@ -61,6 +61,17 @@ assert.match(html, /Math\.round\(Number\(count\) \* 1000 \/ total\)/);
 assert.match(html, /groups smaller than 3 are hidden/);
 assert.match(html, /typeof report\.collection_enabled === 'boolean'/);
 assert.match(html, /@media \(max-width:760px\).*comparison-grid/);
+assert.match(html, /color-scheme: dark/);
+assert.match(html, /quaptureiq-horizontal-logo\.png/);
+assert.match(html, /comparison-charts\.js/);
+assert.match(html, /id="comparison-range"/);
+assert.equal((html.match(/data-comparison-view="line"/g) || []).length, 5);
+for (const category of ['plan_tier', 'selected_voice', 'input_path', 'entry_route', 'sign_in_method']) {
+  assert.match(html, new RegExp('data-comparison-category="' + category + '"'));
+}
+assert.doesNotMatch(html, /data-comparison-category="user_role"/);
+assert.match(html, /comparison_trends/);
+assert.match(html, /six-hour choice bucket meets the minimum-three privacy threshold/);
 assert.doesNotMatch(html, /session\.user\.email/);
 
 console.log('dashboard comparison and mobile checks passed');

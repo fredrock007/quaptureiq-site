@@ -90,7 +90,11 @@ function runDashboard(loadBehavior, {
       if (intervals[id - 1]) intervals[id - 1].cleared = true;
     },
     async fetch(url, options) {
-      assert.equal(url, 'https://quaptureiq-api.duckdns.org/analytics/report');
+      const requestUrl = new URL(url);
+      assert.equal(requestUrl.origin, 'https://quaptureiq-api.duckdns.org');
+      assert.equal(requestUrl.pathname, '/analytics/report');
+      assert.ok(Number.isFinite(Date.parse(requestUrl.searchParams.get('since'))));
+      assert.ok(Number.isFinite(Date.parse(requestUrl.searchParams.get('until'))));
       assert.equal(options.headers.Authorization, 'Bearer test-access-token');
       fetchRequests.push({ url, options });
       return { ok: true, async json() { return report; } };

@@ -6,15 +6,15 @@
   <meta name="description" content="Private QuaptureIQ product analytics dashboard">
   <title>QuaptureIQ Product Analytics</title>
   <style>
-    :root { color-scheme: light; --navy:#172447; --muted:#596681; --violet:#6751c8; --cyan:#20a9bb; --line:#e5e8f2; --card:#fff; }
+    :root { color-scheme: dark; --navy:#e8f1ff; --muted:#a6b6ce; --violet:#b7a2ff; --cyan:#48d9e8; --line:#293b56; --card:#111d30; --bg:#070d17; }
     * { box-sizing:border-box; }
-    body { margin:0; background:linear-gradient(145deg,#f4f1ff,#fbfdff 70%); color:var(--navy); font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; }
+    body { margin:0; background:radial-gradient(ellipse at 15% 0%,#10243a,transparent 44%),var(--bg); color:var(--navy); font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; }
     main { width:min(100% - 2rem,1100px); margin:auto; padding:2.5rem 0 4rem; }
     header { display:flex; justify-content:space-between; gap:1rem; align-items:end; flex-wrap:wrap; }
     h1 { margin:0; font-size:clamp(1.8rem,5vw,3rem); line-height:1.1; }
     h2 { margin:0 0 1rem; font-size:1.15rem; }
     p { color:var(--muted); }
-    .panel,.card { background:var(--card); border:1px solid var(--line); border-radius:1rem; box-shadow:0 14px 40px #272a6010; }
+    .panel,.card { background:linear-gradient(155deg,#111e32,#0e192b); border:1px solid var(--line); border-radius:1rem; box-shadow:0 14px 40px #0008; }
     .panel { margin-top:1.5rem; padding:1rem; }
     form { display:grid; grid-template-columns:repeat(2,1fr) auto; gap:.75rem; align-items:end; }
     .auth-form { grid-template-columns:1fr auto; }
@@ -23,7 +23,7 @@
     .connection-actions { display:flex; align-items:center; gap:.75rem; flex-wrap:wrap; }
     .connection-tools { display:flex; align-items:center; justify-content:space-between; gap:.75rem; flex-wrap:wrap; margin-top:.75rem; }
     .connection-tools .hint { margin:.25rem 0; }
-    .collection-status { display:inline-flex; align-items:center; gap:.55rem; min-height:2.75rem; margin:0; padding:.55rem .85rem; border:1px solid var(--line); border-radius:999px; color:var(--muted); background:#fff; font-size:.9rem; font-weight:750; }
+    .collection-status { display:inline-flex; align-items:center; gap:.55rem; min-height:2.75rem; margin:0; padding:.55rem .85rem; border:1px solid var(--line); border-radius:999px; color:var(--muted); background:#0c1728; font-size:.9rem; font-weight:750; }
     .collection-led { width:.62rem; height:.62rem; flex:0 0 auto; border-radius:50%; background:#8792a5; }
     .collection-status[data-state="enabled"] { color:#145c3a; border-color:#b9e4cb; background:#effaf3; }
     .collection-status[data-state="enabled"] .collection-led { background:#168b51; box-shadow:0 0 0 .22rem rgba(22,139,81,.14); animation:collection-pulse 1.8s ease-in-out infinite; }
@@ -33,9 +33,10 @@
     @keyframes collection-pulse { 50% { box-shadow:0 0 0 .42rem rgba(22,139,81,0); opacity:.72; } }
     @media (prefers-reduced-motion: reduce) { .collection-status[data-state="enabled"] .collection-led { animation:none; } }
     label { display:grid; gap:.3rem; color:var(--muted); font-size:.85rem; font-weight:650; }
-    input,button { min-height:2.75rem; border:1px solid #cbd2e3; border-radius:.6rem; padding:.6rem .75rem; font:inherit; }
-    input { color:var(--navy); background:#fff; }
-    button { cursor:pointer; color:#fff; border-color:var(--violet); background:var(--violet); font-weight:700; }
+    input,button { min-height:2.75rem; border:1px solid #40536e; border-radius:.6rem; padding:.6rem .75rem; font:inherit; }
+    input { color:var(--navy); background:#0b1524; }
+    button { cursor:pointer; color:var(--navy); border-color:#40536e; background:#0b1524; font-weight:700; }
+    button[aria-pressed="true"] { border-color:var(--cyan); background:#123442; }
     button:disabled { cursor:wait; opacity:.65; }
     .status { min-height:1.5rem; margin:.75rem 0 0; font-size:.9rem; }
     .error { color:#a33b3b; }
@@ -59,7 +60,7 @@
     th { color:var(--muted); font-size:.82rem; }
     .bar { height:.55rem; min-width:2px; border-radius:99px; background:linear-gradient(90deg,var(--violet),var(--cyan)); }
     .empty { color:var(--muted); padding:1rem 0; }
-    .ops-status { margin-top:1.5rem; padding:1rem 1.2rem; border:2px solid #8b93a4; border-radius:1rem; background:#f2f4f8; color:#35405a; }
+    .ops-status { margin-top:1.5rem; padding:1rem 1.2rem; border:2px solid #40536e; border-radius:1rem; background:#0c1728; color:var(--navy); }
     .ops-status strong { display:block; font-size:1.35rem; }
     .ops-status[data-level="operational"] { border-color:#168b51; background:#effaf3; color:#145c3a; }
     .ops-status[data-level="degraded"],.ops-status[data-level="monitoring_incomplete"] { border-color:#d18b0b; background:#fff8e8; color:#765100; }
@@ -104,20 +105,37 @@
     .trend-mark { fill:none; stroke-width:2.5; }.trend-marker-p50 { stroke:#087f8c; }.trend-marker-p95 { stroke:#6045b5; }.trend-marker-p99 { stroke:#a96900; }
     @keyframes trend-draw { to { stroke-dashoffset:0; } }
     .incident-list { display:grid; gap:.75rem; }
-    .incident { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:.5rem 1rem; padding:.85rem; border:1px solid var(--line); border-radius:.75rem; background:#fff; }
+    .incident { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:.5rem 1rem; padding:.85rem; border:1px solid var(--line); border-radius:.75rem; background:#0c1728; }
     .incident strong { color:#922b2b; }.incident p { margin:.15rem 0; }.incident-actions { display:flex; gap:.5rem; align-items:center; }.incident-actions button { min-width:8rem; }
     .event-table-wrap { overflow-x:auto; }
     .comparison-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:1rem; margin-top:1.5rem; }
     .comparison-grid .section { margin-top:0; }
     .comparison-note { margin:.35rem 0 0; color:var(--muted); font-size:.82rem; }
+    .brand-lockup { display:flex; align-items:center; gap:1rem; }
+    .brand-logo-plate { display:inline-flex; padding:.45rem .6rem; border-radius:.7rem; background:#f8fbff; }
+    .brand-logo-plate img { display:block; width:min(225px,42vw); height:auto; }
+    .brand-copy p { margin:0; }
+    .comparison-toolbar { display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap; margin-top:1.5rem; padding:.8rem 1rem; border:1px solid var(--line); border-radius:.8rem; background:#0c1728; }
+    .comparison-toolbar h2 { margin-bottom:.2rem; }
+    .comparison-toolbar p { margin:0; }
+    .comparison-controls { display:flex; gap:.4rem; margin-bottom:.7rem; }
+    .comparison-controls button { min-height:2.3rem; padding:.45rem .7rem; }
+    .comparison-chart-wrap { width:100%; min-height:150px; overflow:auto; }
+    .comparison-chart-wrap svg { width:100%; min-width:420px; height:180px; }
+    .comparison-chart-wrap polyline { fill:none; stroke-width:3; stroke-linecap:round; stroke-linejoin:round; }
+    .comparison-legend { display:flex; flex-wrap:wrap; gap:.6rem; color:var(--muted); font-size:.85rem; }
+    .comparison-legend i { display:inline-block; width:1rem; border-top:3px solid var(--cyan); margin-right:.25rem; }
+    .comparison-range-hint { margin:.35rem 0 0; color:var(--muted); font-size:.82rem; }
+    .coverage-item,.threshold-copy { background:#0c1728; }
+    .threshold-info[open] .threshold-copy { color:var(--navy); }
     footer { margin-top:1.5rem; color:var(--muted); font-size:.85rem; }
-    @media (max-width:760px) { form,.grid,.ops-grid,.coverage-grid,.comparison-grid,.timing-summary-grid { grid-template-columns:1fr; } form button { grid-column:auto; } .incident { grid-template-columns:1fr; } }
+    @media (max-width:760px) { form,.grid,.ops-grid,.coverage-grid,.comparison-grid,.timing-summary-grid { grid-template-columns:1fr; } form button { grid-column:auto; } .incident { grid-template-columns:1fr; } .brand-logo-plate img { width:min(185px,62vw); } }
   </style>
 </head>
 <body>
 <main>
   <header>
-    <div><p class="muted">QuaptureIQ owner view</p><h1>Product analytics</h1></div>
+    <div class="brand-lockup"><span class="brand-logo-plate"><img src="./assets/quaptureiq-horizontal-logo.png" alt="QuaptureIQ"></span><div class="brand-copy"><p class="muted">Owner view</p><h1>Product analytics</h1></div></div>
     <p class="hint">Aggregate metrics only. No learner content or user IDs are displayed.</p>
   </header>
 
@@ -211,13 +229,17 @@
     <section class="card section"><h2>Input source</h2><div id="sources" class="empty">No data in this window.</div><p id="collector-input-source" class="telemetry-status">Unavailable</p></section>
     <section class="card section"><h2>Answer-next usage</h2><div id="next" class="empty">No data in this window.</div><p id="collector-answer-next" class="telemetry-status">Unavailable</p></section>
     <section class="card section"><h2>Normalized failure stages</h2><div id="failures" class="empty">No data in this window.</div><p id="collector-failure-stages" class="telemetry-status">Unavailable</p></section>
+    <section class="comparison-toolbar" aria-labelledby="comparisons-heading">
+      <div><h2 id="comparisons-heading">Product comparisons</h2><p class="comparison-range-hint">UTC six-hour buckets · groups below three are hidden</p></div>
+      <label>Report window<select id="comparison-range"><option value="24">Last 24 hours</option><option value="48" selected>Last 48 hours</option></select></label>
+    </section>
     <section class="comparison-grid" aria-label="Product comparisons">
-      <section class="card section"><h2>Plan tier</h2><div id="comparison-plan" class="empty">No data in this window.</div><p id="collector-plan-tier" class="telemetry-status">Unavailable</p><p class="comparison-note">University is not included because it is reserved, not an active entitlement.</p></section>
-      <section class="card section"><h2>Selected voice</h2><div id="comparison-voice" class="empty">No data in this window.</div><p id="collector-selected-voice" class="telemetry-status">Unavailable</p></section>
-      <section class="card section"><h2>Image input</h2><div id="comparison-input" class="empty">No data in this window.</div><p id="collector-image-input" class="telemetry-status">Unavailable</p></section>
-      <section class="card section"><h2>Entry route</h2><div id="comparison-route" class="empty">No data in this window.</div><p id="collector-entry-route" class="telemetry-status">Unavailable</p></section>
-      <section class="card section"><h2>Sign-in method</h2><div id="comparison-signin" class="empty">No data in this window.</div><p id="collector-sign-in-method" class="telemetry-status">Unavailable</p></section>
-      <section class="card section"><h2>User role</h2><div id="comparison-role" class="empty">No data in this window. The app does not currently record an explicit user-selected role.</div><p id="collector-user-role" class="telemetry-status">Unavailable</p></section>
+      <section class="card section"><h2>Plan tier</h2><div class="comparison-controls"><button type="button" data-comparison-category="plan_tier" data-comparison-view="table" aria-pressed="true">Table</button><button type="button" data-comparison-category="plan_tier" data-comparison-view="line" aria-pressed="false">Line chart</button></div><div id="comparison-plan" class="empty">No data in this window.</div><p id="collector-plan-tier" class="telemetry-status">Unavailable</p><p class="comparison-note">University is not included because it is reserved, not an active entitlement.</p></section>
+      <section class="card section"><h2>Selected voice</h2><div class="comparison-controls"><button type="button" data-comparison-category="selected_voice" data-comparison-view="table" aria-pressed="true">Table</button><button type="button" data-comparison-category="selected_voice" data-comparison-view="line" aria-pressed="false">Line chart</button></div><div id="comparison-voice" class="empty">No data in this window.</div><p id="collector-selected-voice" class="telemetry-status">Unavailable</p></section>
+      <section class="card section"><h2>Image input</h2><div class="comparison-controls"><button type="button" data-comparison-category="input_path" data-comparison-view="table" aria-pressed="true">Table</button><button type="button" data-comparison-category="input_path" data-comparison-view="line" aria-pressed="false">Line chart</button></div><div id="comparison-input" class="empty">No data in this window.</div><p id="collector-image-input" class="telemetry-status">Unavailable</p></section>
+      <section class="card section"><h2>Entry route</h2><div class="comparison-controls"><button type="button" data-comparison-category="entry_route" data-comparison-view="table" aria-pressed="true">Table</button><button type="button" data-comparison-category="entry_route" data-comparison-view="line" aria-pressed="false">Line chart</button></div><div id="comparison-route" class="empty">No data in this window.</div><p id="collector-entry-route" class="telemetry-status">Unavailable</p></section>
+      <section class="card section"><h2>Sign-in method</h2><div class="comparison-controls"><button type="button" data-comparison-category="sign_in_method" data-comparison-view="table" aria-pressed="true">Table</button><button type="button" data-comparison-category="sign_in_method" data-comparison-view="line" aria-pressed="false">Line chart</button></div><div id="comparison-signin" class="empty">No data in this window.</div><p id="collector-sign-in-method" class="telemetry-status">Unavailable</p></section>
+      <section class="card section"><h2>User role</h2><div id="comparison-role" class="empty">Not collected. The app does not currently record an explicit user-selected role. User role is unsupported.</div><p id="collector-user-role" class="telemetry-status">Unavailable</p></section>
     </section>
   </section>
 
@@ -226,6 +248,7 @@
 </main>
 <script src="./vendor/supabase-js-2.117.2.js" integrity="sha384-WgXwGL6fUsYJWNaKJgVbrJKGRQwc1vieh2oy4kw9nXqpNDz3tdSsqEYUgeHD/NuF" crossorigin="anonymous"></script>
 <script src="./config.production.js"></script>
+<script src="./comparison-charts.js"></script>
 <script>
   const supabaseLibrarySources = [
     'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2',
@@ -718,6 +741,51 @@
       return '<tr><td>' + safe(friendlyLabel(key)) + '</td><td>' + number(count) + '</td><td>' + percent + '%</td></tr>';
     }).join('') + '</tbody></table>';
   }
+  const comparisonSpecs = [
+    { category:'plan_tier', target:'#comparison-plan', choices:['free','student','professional'], label:'Plan tier' },
+    { category:'selected_voice', target:'#comparison-voice', choices:['quapture_voice','sky'], label:'Selected voice' },
+    { category:'input_path', target:'#comparison-input', choices:['choose_photo','take_photo','scan_document'], label:'Image input' },
+    { category:'entry_route', target:'#comparison-route', choices:['q_lens_home','dashboard_route'], label:'Entry route' },
+    { category:'sign_in_method', target:'#comparison-signin', choices:['email','google'], label:'Sign-in method' },
+  ];
+  const comparisonViews = Object.create(null);
+  comparisonSpecs.forEach((spec) => { comparisonViews[spec.category] = 'table'; });
+  let latestProductReport = null;
+  function renderComparisonLine(target, trend, choices, label, reportWindow) {
+    const model = window.QuaptureComparisonCharts?.buildLineChartModel(trend?.series, reportWindow?.since, reportWindow?.until, choices, 3);
+    if (!model || !model.series.length) {
+      target.innerHTML = '<div class="empty">' + (trend?.series && Object.keys(trend.series).length ? 'No six-hour choice bucket meets the minimum-three privacy threshold.' : 'No data in this window.') + '</div>';
+      return;
+    }
+    const allPoints = model.series.flatMap((series) => series.points);
+    const max = Math.max(3, ...allPoints.map((point) => point.count));
+    const left = 24; const top = 12; const plotWidth = 680; const plotHeight = 112;
+    const x = (timestamp) => left + ((timestamp - model.start) / Math.max(1, model.end - model.start)) * plotWidth;
+    const y = (count) => top + plotHeight - (count / max) * plotHeight;
+    const svg = '<svg viewBox="0 0 744 180" role="img" aria-label="' + safe(label) + ' over time"><line x1="24" y1="124" x2="704" y2="124" stroke="#40536e" />' + model.series.map((series) => '<polyline points="' + series.points.map((point) => x(point.timestamp).toFixed(1) + ',' + y(point.count).toFixed(1)).join(' ') + '" stroke="' + safe(series.color) + '" />').join('') + '</svg>';
+    target.innerHTML = '<div class="comparison-legend" aria-label="' + safe(label) + ' chart legend">' + model.series.map((series) => '<span><i style="border-color:' + safe(series.color) + '"></i>' + safe(series.label) + '</span>').join('') + '</div><div class="comparison-chart-wrap">' + svg + '</div><p class="status">' + allPoints.length + ' visible UTC buckets</p>';
+  }
+  function renderComparisonCards(report) {
+    const comparisons = report.comparisons || {};
+    const trends = report.comparison_trends || {};
+    const reportWindow = report.report_window || report.window || {};
+    comparisonSpecs.forEach((spec) => {
+      const target = document.querySelector(spec.target);
+      if (comparisonViews[spec.category] === 'line') renderComparisonLine(target, trends[spec.category], spec.choices, spec.label, reportWindow);
+      else comparison(target, comparisons[spec.category]);
+    });
+    const role = document.querySelector('#comparison-role');
+    if (role) role.innerHTML = '<div class="empty">Not collected. The app does not currently record an explicit user-selected role. User role is unsupported.</div>';
+  }
+  if (typeof document.querySelectorAll === 'function') {
+    document.querySelectorAll('[data-comparison-view]').forEach((button) => button.addEventListener('click', () => {
+      const category = button.dataset.comparisonCategory;
+      comparisonViews[category] = button.dataset.comparisonView;
+      document.querySelectorAll('[data-comparison-category="' + category + '"]').forEach((item) => item.setAttribute('aria-pressed', String(item === button)));
+      if (latestProductReport) renderComparisonCards(latestProductReport);
+    }));
+  }
+  document.querySelector('#comparison-range').addEventListener('change', () => { void loadMetrics({ manual: true }); });
   function telemetryStatus(entry) {
     if (!entry || typeof entry.configured !== 'boolean' || typeof entry.available !== 'boolean') {
       return { state: 'unavailable', label: 'Unavailable' };
@@ -878,9 +946,16 @@
         if (manual) showToast(authStatus.textContent, 'error');
         return;
       }
-      const response = await fetch(apiBaseUrl + '/analytics/report', { headers: { Authorization: 'Bearer ' + session.access_token } });
+      const rangeHours = Number(document.querySelector('#comparison-range').value) === 24 ? 24 : 48;
+      const until = new Date();
+      const since = new Date(until.getTime() - rangeHours * 60 * 60 * 1000);
+      const reportUrl = new URL(apiBaseUrl + '/analytics/report');
+      reportUrl.searchParams.set('since', since.toISOString());
+      reportUrl.searchParams.set('until', until.toISOString());
+      const response = await fetch(reportUrl.toString(), { headers: { Authorization: 'Bearer ' + session.access_token } });
       if (!response.ok) throw new Error('The analytics API returned HTTP ' + response.status + '.');
       const report = await response.json();
+      latestProductReport = report;
       renderOperational(report.operational || {});
       renderEvents(report.recent_events || []);
       renderAnswerDisplaySummaries(report.answer_display_timing_status, report.answer_display_timing_summaries);
@@ -909,13 +984,7 @@
       rows(document.querySelector('#sources'), report.input_sources, sum(report.input_sources), 'Input source');
       rows(document.querySelector('#next'), report.answer_next_question_by_mode, sum(report.answer_next_question_by_mode), 'Mode');
       rows(document.querySelector('#failures'), report.failure_stages, sum(report.failure_stages), 'Failure stage');
-      const comparisons = report.comparisons || {};
-      comparison(document.querySelector('#comparison-plan'), comparisons.plan_tier);
-      comparison(document.querySelector('#comparison-voice'), comparisons.selected_voice);
-      comparison(document.querySelector('#comparison-input'), comparisons.input_path);
-      comparison(document.querySelector('#comparison-route'), comparisons.entry_route);
-      comparison(document.querySelector('#comparison-signin'), comparisons.sign_in_method);
-      comparison(document.querySelector('#comparison-role'), comparisons.user_role);
+      renderComparisonCards(report);
       const categoryStatuses = report.telemetry_collection?.categories || {};
       [
         ['collector-usage-by-mode', 'usage_by_mode'], ['collector-input-source', 'input_source'],
