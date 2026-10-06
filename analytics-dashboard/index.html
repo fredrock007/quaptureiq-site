@@ -113,6 +113,24 @@
     .incident-list { display:grid; gap:.75rem; }
     .incident { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:.5rem 1rem; padding:.85rem; border:1px solid var(--line); border-radius:.75rem; background:#0c1728; }
     .incident strong { color:#922b2b; }.incident p { margin:.15rem 0; }.incident-actions { display:flex; gap:.5rem; align-items:center; }.incident-actions button { min-width:8rem; }
+    .panel-scroll { max-width:100%; max-height:20rem; overflow:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; scrollbar-color:var(--cyan) #142238; scrollbar-width:auto; }
+    .panel-scroll:focus-visible,#next:focus-visible,#failures:focus-visible { outline:3px solid var(--cyan); outline-offset:2px; }
+    .panel-scroll::-webkit-scrollbar,#next::-webkit-scrollbar,#failures::-webkit-scrollbar { width:.75rem; height:.75rem; }
+    .panel-scroll::-webkit-scrollbar-track,#next::-webkit-scrollbar-track,#failures::-webkit-scrollbar-track { background:#142238; border-radius:999px; }
+    .panel-scroll::-webkit-scrollbar-thumb,#next::-webkit-scrollbar-thumb,#failures::-webkit-scrollbar-thumb { background:var(--cyan); border:2px solid #142238; border-radius:999px; }
+    #incident-feed { min-width:0; }
+    #incident-feed .incident > div:first-child { min-width:0; overflow-wrap:anywhere; }
+    #incident-feed .incident-actions { flex-wrap:wrap; }
+    #answer-display-timings,#next,#failures { max-width:100%; overflow-x:auto; overflow-y:hidden; }
+    #next,#failures { max-height:16rem; }
+    #answer-display-timings table,#next table,#failures table { border-collapse:separate; border-spacing:0; }
+    #answer-display-timings tbody,#next tbody,#failures tbody { display:block; max-height:12rem; overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; scrollbar-color:var(--cyan) #142238; scrollbar-width:auto; }
+    #answer-display-timings tbody::-webkit-scrollbar,#next tbody::-webkit-scrollbar,#failures tbody::-webkit-scrollbar { width:.75rem; }
+    #answer-display-timings tbody::-webkit-scrollbar-track,#next tbody::-webkit-scrollbar-track,#failures tbody::-webkit-scrollbar-track { background:#142238; border-radius:999px; }
+    #answer-display-timings tbody::-webkit-scrollbar-thumb,#next tbody::-webkit-scrollbar-thumb,#failures tbody::-webkit-scrollbar-thumb { background:var(--cyan); border:2px solid #142238; border-radius:999px; }
+    #answer-display-timings thead,#answer-display-timings tbody tr,#next thead,#next tbody tr,#failures thead,#failures tbody tr { display:table; width:100%; table-layout:fixed; }
+    #answer-display-timings tbody:focus-visible,#next tbody:focus-visible,#failures tbody:focus-visible { outline:3px solid var(--cyan); outline-offset:-3px; }
+    #answer-display-timings thead th,#next thead th,#failures thead th { background:#111d30; }
     .event-table-wrap { overflow-x:auto; }
     #recent-events { max-width:100%; max-height:24rem; overflow-x:auto; overflow-y:hidden; scrollbar-color:var(--cyan) #142238; scrollbar-width:auto; }
     #recent-events:focus-visible { outline:3px solid var(--cyan); outline-offset:2px; }
@@ -251,11 +269,11 @@
       </svg></div>
       <p id="trend-legend" class="hint" aria-live="polite">p50 · p95 · p99 · waiting for samples</p>
     </section>
-    <section class="card section"><h2>Recent system incidents</h2><p class="hint">Incident history is retained for 48 hours. Dashboard metrics continue to refresh every minute.</p><div id="incident-feed" class="incident-list"><div class="empty">No incidents recorded in the last 48 hours.</div></div></section>
+    <section class="card section"><h2>Recent system incidents</h2><p class="hint">Incident history is retained for 48 hours. Dashboard metrics continue to refresh every minute.</p><div id="incident-feed" class="incident-list panel-scroll" role="region" aria-label="Recent system incidents" tabindex="0"><div class="empty">No incidents recorded in the last 48 hours.</div></div></section>
     </div>
     <div id="panel-app-activity" class="dashboard-tabpanel" role="tabpanel" aria-labelledby="tab-app-activity" tabindex="0" hidden>
     <section class="card section"><h2>Recent timestamped product activity</h2><div id="recent-events" class="event-table-wrap empty" role="region" aria-label="Recent timestamped product activity" tabindex="0">No events recorded.</div></section>
-    <section class="card section"><h2>How long answers take to appear</h2><p class="hint"><strong>Time until answer appears on phone:</strong> client-measured from answer submission until the parsed result is visible in its first rendered frame. This is separate from API request latency. Summaries use recorded observations in the API's 90-day retention; they do not prove continuous collection coverage.</p><p id="answer-display-coverage" class="telemetry-status">Timing coverage unavailable</p><div id="answer-display-summary-status" class="telemetry-status" role="status" aria-live="polite">Timing summaries unavailable</div><div id="answer-display-summaries" class="timing-summary-grid"></div><h3>Recent completed answers</h3><div id="answer-display-timings" class="event-table-wrap empty" aria-live="polite">No completed answer timings recorded.</div></section>
+    <section class="card section"><h2>How long answers take to appear</h2><p class="hint"><strong>Time until answer appears on phone:</strong> client-measured from answer submission until the parsed result is visible in its first rendered frame. This is separate from API request latency. Summaries use recorded observations in the API's 90-day retention; they do not prove continuous collection coverage.</p><p id="answer-display-coverage" class="telemetry-status">Timing coverage unavailable</p><div id="answer-display-summary-status" class="telemetry-status" role="status" aria-live="polite">Timing summaries unavailable</div><div id="answer-display-summaries" class="timing-summary-grid panel-scroll" role="region" aria-label="Answer display timing summaries" tabindex="0"></div><h3>Recent completed answers</h3><div id="answer-display-timings" class="event-table-wrap empty" aria-live="polite">No completed answer timings recorded.</div></section>
     </div>
     <div id="panel-overview" class="dashboard-tabpanel" role="tabpanel" aria-labelledby="tab-overview" tabindex="0">
     <div class="grid">
@@ -269,8 +287,8 @@
     <div id="panel-usage" class="dashboard-tabpanel" role="tabpanel" aria-labelledby="tab-usage" tabindex="0" hidden>
     <section class="card section"><h2>Usage by mode</h2><div id="modes" class="empty">No data in this window.</div><p id="collector-usage-by-mode" class="telemetry-status">Unavailable</p></section>
     <section class="card section"><h2>Input source</h2><div id="sources" class="empty">No data in this window.</div><p id="collector-input-source" class="telemetry-status">Unavailable</p></section>
-    <section class="card section"><h2>Answer-next usage</h2><div id="next" class="empty">No data in this window.</div><p id="collector-answer-next" class="telemetry-status">Unavailable</p></section>
-    <section class="card section"><h2>Normalized failure stages</h2><div id="failures" class="empty">No data in this window.</div><p id="collector-failure-stages" class="telemetry-status">Unavailable</p></section>
+    <section class="card section"><h2>Answer-next usage</h2><div id="next" class="empty" role="region" aria-label="Answer-next usage data" tabindex="0">No data in this window.</div><p id="collector-answer-next" class="telemetry-status">Unavailable</p></section>
+    <section class="card section"><h2>Normalized failure stages</h2><div id="failures" class="empty" role="region" aria-label="Normalized failure stages data" tabindex="0">No data in this window.</div><p id="collector-failure-stages" class="telemetry-status">Unavailable</p></section>
     </div>
     <div id="panel-product-comparisons" class="dashboard-tabpanel" role="tabpanel" aria-labelledby="tab-product-comparisons" tabindex="0" hidden>
     <section class="comparison-toolbar" aria-labelledby="comparisons-heading">
@@ -544,7 +562,7 @@
       return;
     }
     target.className = 'event-table-wrap';
-    target.innerHTML = '<table><thead><tr><th>Mode</th><th>Time until answer appears</th><th>First displayed (local time)</th></tr></thead><tbody>' +
+    target.innerHTML = '<table><thead><tr><th>Mode</th><th>Time until answer appears</th><th>First displayed (local time)</th></tr></thead><tbody tabindex="0" aria-label="Scrollable completed answer rows">' +
       rows.map((item) => '<tr><td>' + safe(friendlyLabel(item.mode)) + '</td><td>' +
         number(item.duration_ms) + ' ms</td><td><time datetime="' + safe(item.occurred_at) + '" title="' +
         safe(item.occurred_at) + '">' + safe(localTimestamp(item.occurred_at)) + '</time></td></tr>').join('') +
@@ -691,7 +709,10 @@
     const entries = Object.entries(values || {});
     if (!entries.length) { target.innerHTML = '<div class="empty">No data in this window.</div>'; return; }
     entries.sort((a,b) => b[1] - a[1]);
-    target.innerHTML = '<table><thead><tr><th>' + label + '</th><th>Count</th><th>Share</th></tr></thead><tbody>' + entries.map(([key,value]) => {
+    const scrollLabel = target.id === 'next' ? 'Scrollable answer-next usage rows'
+      : target.id === 'failures' ? 'Scrollable normalized failure stage rows' : null;
+    const scrollAttributes = scrollLabel ? ' tabindex="0" aria-label="' + scrollLabel + '"' : '';
+    target.innerHTML = '<table><thead><tr><th>' + label + '</th><th>Count</th><th>Share</th></tr></thead><tbody' + scrollAttributes + '>' + entries.map(([key,value]) => {
       const share = total ? Math.round(value * 1000 / total) / 10 : 0;
       return '<tr><td>' + safe(friendlyLabel(key)) + '</td><td>' + number(value) + '</td><td><div class="bar" style="width:' + Math.max(share, 1) + '%" title="' + share + '%"></div></td></tr>';
     }).join('') + '</tbody></table>';
