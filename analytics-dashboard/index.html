@@ -48,6 +48,12 @@
     @media (prefers-reduced-motion: no-preference) { .toast:not([hidden]) { animation:toast-in .18s ease-out both; } }
     @keyframes toast-in { from { opacity:0; translate:0 .4rem; } to { opacity:1; translate:0 0; } }
     .grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-top:1.5rem; }
+    .dashboard-tablist { display:flex; gap:.5rem; overflow-x:auto; margin:1.5rem 0 0; padding:.25rem .1rem .65rem; border-bottom:1px solid var(--line); }
+    .dashboard-tab { flex:0 0 auto; min-height:2.75rem; }
+    .dashboard-tab[aria-selected="true"] { border-color:var(--cyan); background:#123442; box-shadow:inset 0 -2px 0 var(--cyan); }
+    .dashboard-tab:focus-visible { outline:3px solid var(--cyan); outline-offset:2px; }
+    .dashboard-tabpanel { min-width:0; }
+    .dashboard-tabpanel[hidden] { display:none; }
     .card { padding:1rem; }
     .metric { font-size:2rem; font-weight:800; }
     .muted { color:var(--muted); }
@@ -186,6 +192,15 @@
   </section>
 
   <section id="dashboard" hidden>
+    <div class="dashboard-tablist" role="tablist" aria-label="Dashboard sections">
+      <button id="tab-overview" class="dashboard-tab" type="button" role="tab" aria-controls="panel-overview" aria-selected="true" tabindex="0">Overview</button>
+      <button id="tab-system-health" class="dashboard-tab" type="button" role="tab" aria-controls="panel-system-health" aria-selected="false" tabindex="-1">System Health</button>
+      <button id="tab-app-activity" class="dashboard-tab" type="button" role="tab" aria-controls="panel-app-activity" aria-selected="false" tabindex="-1">App Activity</button>
+      <button id="tab-usage" class="dashboard-tab" type="button" role="tab" aria-controls="panel-usage" aria-selected="false" tabindex="-1">Usage</button>
+      <button id="tab-product-comparisons" class="dashboard-tab" type="button" role="tab" aria-controls="panel-product-comparisons" aria-selected="false" tabindex="-1">Product Comparisons</button>
+    </div>
+
+    <div id="panel-system-health" class="dashboard-tabpanel" role="tabpanel" aria-labelledby="tab-system-health" tabindex="0" hidden>
     <section id="ops-status" class="ops-status" data-level="monitoring_incomplete" role="status" aria-live="polite">
       <strong id="ops-status-title">Monitoring incomplete</strong>
       <span id="ops-status-note">Waiting for a fresh operational snapshot.</span>
@@ -224,8 +239,12 @@
       <p id="trend-legend" class="hint" aria-live="polite">p50 · p95 · p99 · waiting for samples</p>
     </section>
     <section class="card section"><h2>Recent system incidents</h2><p class="hint">Incident history is retained for 48 hours. Dashboard metrics continue to refresh every minute.</p><div id="incident-feed" class="incident-list"><div class="empty">No incidents recorded in the last 48 hours.</div></div></section>
+    </div>
+    <div id="panel-app-activity" class="dashboard-tabpanel" role="tabpanel" aria-labelledby="tab-app-activity" tabindex="0" hidden>
     <section class="card section"><h2>Recent timestamped product activity</h2><div id="recent-events" class="event-table-wrap empty">No events recorded.</div></section>
     <section class="card section"><h2>How long answers take to appear</h2><p class="hint"><strong>Time until answer appears on phone:</strong> client-measured from answer submission until the parsed result is visible in its first rendered frame. This is separate from API request latency. Summaries use recorded observations in the API's 90-day retention; they do not prove continuous collection coverage.</p><p id="answer-display-coverage" class="telemetry-status">Timing coverage unavailable</p><div id="answer-display-summary-status" class="telemetry-status" role="status" aria-live="polite">Timing summaries unavailable</div><div id="answer-display-summaries" class="timing-summary-grid"></div><h3>Recent completed answers</h3><div id="answer-display-timings" class="event-table-wrap empty" aria-live="polite">No completed answer timings recorded.</div></section>
+    </div>
+    <div id="panel-overview" class="dashboard-tabpanel" role="tabpanel" aria-labelledby="tab-overview" tabindex="0">
     <div class="grid">
       <div class="card"><div class="muted">Answers requested</div><div id="requested" class="metric">—</div></div>
       <div class="card"><div class="muted">Answers succeeded</div><div id="succeeded" class="metric">—</div></div>
@@ -233,11 +252,14 @@
       <div class="card"><div class="muted">Average duration</div><div id="duration" class="metric">—</div></div>
       <div id="active-session-card" class="card session-count" data-level="neutral"><div class="muted">Active app sessions</div><div id="active-devices" class="metric">—</div><p id="active-session-state" class="telemetry-status" role="status" aria-live="polite">Session count unavailable</p><p id="active-observed-at" class="hint">Sample time unavailable</p><p id="active-capacity-note" class="telemetry-status">Display bands are visual only; they are not capacity, safety, or outage limits.</p><p class="hint">This count includes signed-in app sessions with a successful foreground marker or heartbeat in the last 2 minutes. It is not a unique-user or unique-device count. If you are on Home but this stays at 0, the app marker may not be reaching the API. Home is not a usage mode; mode totals update after you select a mode. Markers stay in API memory and are not linked to accounts or stable device IDs.</p></div>
     </div>
-
+    </div>
+    <div id="panel-usage" class="dashboard-tabpanel" role="tabpanel" aria-labelledby="tab-usage" tabindex="0" hidden>
     <section class="card section"><h2>Usage by mode</h2><div id="modes" class="empty">No data in this window.</div><p id="collector-usage-by-mode" class="telemetry-status">Unavailable</p></section>
     <section class="card section"><h2>Input source</h2><div id="sources" class="empty">No data in this window.</div><p id="collector-input-source" class="telemetry-status">Unavailable</p></section>
     <section class="card section"><h2>Answer-next usage</h2><div id="next" class="empty">No data in this window.</div><p id="collector-answer-next" class="telemetry-status">Unavailable</p></section>
     <section class="card section"><h2>Normalized failure stages</h2><div id="failures" class="empty">No data in this window.</div><p id="collector-failure-stages" class="telemetry-status">Unavailable</p></section>
+    </div>
+    <div id="panel-product-comparisons" class="dashboard-tabpanel" role="tabpanel" aria-labelledby="tab-product-comparisons" tabindex="0" hidden>
     <section class="comparison-toolbar" aria-labelledby="comparisons-heading">
       <div><h2 id="comparisons-heading">Product comparisons</h2><p class="comparison-range-hint">UTC six-hour buckets · groups below three are hidden</p></div>
       <label>Report window<select id="comparison-range"><option value="24">Last 24 hours</option><option value="48" selected>Last 48 hours</option></select></label>
@@ -250,6 +272,7 @@
       <section class="card section"><h2>Sign-in method</h2><div class="comparison-controls"><button type="button" data-comparison-category="sign_in_method" data-comparison-view="table" aria-pressed="true">Table</button><button type="button" data-comparison-category="sign_in_method" data-comparison-view="line" aria-pressed="false">Line</button><button type="button" data-comparison-category="sign_in_method" data-comparison-view="pie" aria-pressed="false">Pie</button><button type="button" data-comparison-category="sign_in_method" data-comparison-view="bar" aria-pressed="false">Bar</button></div><div id="comparison-signin" class="empty">No data in this window.</div><p id="collector-sign-in-method" class="telemetry-status">Unavailable</p></section>
       <section class="card section"><h2>User role</h2><div id="comparison-role" class="empty">Not collected. The app does not currently record an explicit user-selected role. User role is unsupported.</div><p id="collector-user-role" class="telemetry-status">Unavailable</p></section>
     </section>
+    </div>
   </section>
 
   <footer>Private owner dashboard. GitHub Pages contains no analytics data, credentials, or private API keys.</footer>
@@ -1052,6 +1075,37 @@
       refreshButton.disabled = false;
     }
   }
+  function setupDashboardTabs(root = document) {
+    const tablist = root.querySelector('[role="tablist"][aria-label="Dashboard sections"]');
+    const tabs = [...tablist.querySelectorAll('[role="tab"]')];
+    const panels = tabs.map((tab) => root.getElementById(tab.getAttribute('aria-controls')));
+
+    function activate(index, moveFocus = false) {
+      tabs.forEach((tab, tabIndex) => {
+        const selected = tabIndex === index;
+        tab.setAttribute('aria-selected', String(selected));
+        tab.tabIndex = selected ? 0 : -1;
+        panels[tabIndex].hidden = !selected;
+      });
+      if (moveFocus) tabs[index].focus();
+    }
+
+    tabs.forEach((tab, index) => {
+      tab.addEventListener('click', () => activate(index));
+      tab.addEventListener('keydown', (event) => {
+        let nextIndex;
+        if (event.key === 'ArrowRight') nextIndex = (index + 1) % tabs.length;
+        else if (event.key === 'ArrowLeft') nextIndex = (index - 1 + tabs.length) % tabs.length;
+        else if (event.key === 'Home') nextIndex = 0;
+        else if (event.key === 'End') nextIndex = tabs.length - 1;
+        else return;
+        event.preventDefault();
+        activate(nextIndex, true);
+      });
+    });
+  }
+
+  setupDashboardTabs();
   refreshButton.addEventListener('click', () => { void loadMetrics({ manual: true }); });
   showSignedOut();
   restoreSession().catch((error) => {
