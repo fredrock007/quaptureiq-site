@@ -80,7 +80,7 @@ assert.match(html, /comparisonViews\[spec\.category\] === 'pie'/);
 assert.match(html, /comparisonViews\[spec\.category\] === 'bar'/);
 assert.doesNotMatch(html, /session\.user\.email/);
 assert.match(html, /points\.length > 1/);
-assert.match(html, /<circle cx=/);
-assert.match(html, /comparison-chart-wrap circle/);
+assert.match(html, /<circle class="comparison-point" data-count=/);
+assert.match(html, /comparison-chart-wrap \.comparison-point/);
 
 console.log('dashboard comparison and mobile checks passed');

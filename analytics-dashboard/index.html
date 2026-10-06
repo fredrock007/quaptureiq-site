@@ -157,10 +157,16 @@
     .comparison-toolbar p { margin:0; }
     .comparison-controls { display:flex; gap:.4rem; margin-bottom:.7rem; }
     .comparison-controls button { min-height:2.3rem; padding:.45rem .7rem; }
-    .comparison-chart-wrap { width:100%; min-height:150px; overflow:auto; }
-    .comparison-chart-wrap svg { width:100%; min-width:420px; height:180px; }
-    .comparison-chart-wrap polyline { fill:none; stroke-width:3; stroke-linecap:round; stroke-linejoin:round; }
-    .comparison-chart-wrap circle { stroke:#0b1020; stroke-width:2; }
+    .comparison-chart-wrap { width:100%; min-width:0; min-height:230px; overflow:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; scrollbar-color:var(--cyan) #142238; scrollbar-width:auto; }
+    .comparison-chart-wrap:focus-visible { outline:3px solid var(--cyan); outline-offset:2px; }
+    .comparison-chart-wrap svg { display:block; width:100%; min-width:460px; height:230px; }
+    .comparison-chart-wrap .comparison-gridline { stroke:#52627a; stroke-opacity:.48; stroke-width:1; }
+    .comparison-chart-wrap .comparison-axis { stroke:#9aabc2; stroke-width:1.25; }
+    .comparison-chart-wrap .comparison-tick { fill:#c1cde0; font:11px system-ui,sans-serif; }
+    .comparison-chart-wrap .comparison-axis-title { fill:#e8f1ff; font:600 11px system-ui,sans-serif; }
+    .comparison-chart-wrap .comparison-series { fill:none; stroke-width:3; stroke-linecap:round; stroke-linejoin:round; }
+    .comparison-chart-wrap .comparison-point { stroke-width:2; }
+    .comparison-chart-wrap .comparison-count { fill:#f2f6ff; font:600 10px system-ui,sans-serif; paint-order:stroke; stroke:#0e192b; stroke-width:3px; stroke-linejoin:round; }
     .comparison-pie { width:148px; height:148px; margin:1rem auto; border-radius:50%; border:2px solid var(--line); }
     .comparison-chart-legend { display:grid; gap:.45rem; }
     .comparison-chart-key { display:inline-flex; align-items:center; gap:.4rem; }
@@ -812,6 +818,7 @@
     }).join('') + '</tbody></table>';
   }
   const comparisonColors = ['#48d9e8', '#55b8ff', '#b7a2ff', '#f3bf65', '#ff8eaa', '#81e0b1'];
+  const comparisonLineColors = ['#f59e0b', '#ef4444', '#3b82f6'];
   function comparisonLegend(entries) {
     return entries.map(([key], index) => '<span class="comparison-chart-key"><i style="background:' + comparisonColors[index % comparisonColors.length] + '"></i>' + safe(friendlyLabel(key)) + '</span>').join('');
   }
@@ -843,6 +850,40 @@
   const comparisonViews = Object.create(null);
   comparisonSpecs.forEach((spec) => { comparisonViews[spec.category] = 'table'; });
   let latestProductReport = null;
+  function comparisonCurvePath(points) {
+    if (points.length < 2) return '';
+    const slopes = points.slice(0, -1).map((point, index) => {
+      const next = points[index + 1];
+      return (next.y - point.y) / Math.max(1, next.x - point.x);
+    });
+    const tangents = points.map((point, index) => {
+      if (index === 0) return slopes[0];
+      if (index === points.length - 1) return slopes[slopes.length - 1];
+      const before = slopes[index - 1]; const after = slopes[index];
+      if (before === 0 || after === 0 || Math.sign(before) !== Math.sign(after)) return 0;
+      return 2 * before * after / (before + after);
+    });
+    for (let index = 0; index < slopes.length; index++) {
+      const slope = slopes[index];
+      if (slope === 0) { tangents[index] = 0; tangents[index + 1] = 0; continue; }
+      const alpha = tangents[index] / slope; const beta = tangents[index + 1] / slope;
+      const magnitude = alpha * alpha + beta * beta;
+      if (magnitude > 9) {
+        const scale = 3 / Math.sqrt(magnitude);
+        tangents[index] = scale * alpha * slope;
+        tangents[index + 1] = scale * beta * slope;
+      }
+    }
+    let path = 'M ' + points[0].x.toFixed(1) + ' ' + points[0].y.toFixed(1);
+    for (let index = 0; index < slopes.length; index++) {
+      const start = points[index]; const end = points[index + 1];
+      const span = end.x - start.x;
+      path += ' C ' + (start.x + span / 3).toFixed(1) + ' ' + (start.y + tangents[index] * span / 3).toFixed(1) +
+        ' ' + (end.x - span / 3).toFixed(1) + ' ' + (end.y - tangents[index + 1] * span / 3).toFixed(1) +
+        ' ' + end.x.toFixed(1) + ' ' + end.y.toFixed(1);
+    }
+    return path;
+  }
   function renderComparisonLine(target, trend, choices, label, reportWindow) {
     const model = window.QuaptureComparisonCharts?.buildLineChartModel(trend?.series, reportWindow?.since, reportWindow?.until, choices, 3);
     if (!model || !model.series.length) {
@@ -851,16 +892,41 @@
     }
     const allPoints = model.series.flatMap((series) => series.points);
     const max = Math.max(3, ...allPoints.map((point) => point.count));
-    const left = 24; const top = 12; const plotWidth = 680; const plotHeight = 112;
+    const left = 48; const top = 28; const plotWidth = 450; const plotHeight = 120;
     const x = (timestamp) => left + ((timestamp - model.start) / Math.max(1, model.end - model.start)) * plotWidth;
     const y = (count) => top + plotHeight - (count / max) * plotHeight;
-    const svg = '<svg viewBox="0 0 744 180" role="img" aria-label="' + safe(label) + ' over time"><line x1="24" y1="124" x2="704" y2="124" stroke="#40536e" />' + model.series.map((series) => {
-      const points = series.points.map((point) => x(point.timestamp).toFixed(1) + ',' + y(point.count).toFixed(1));
-      const line = points.length > 1 ? '<polyline points="' + points.join(' ') + '" stroke="' + safe(series.color) + '" />' : '';
-      const markers = series.points.map((point) => '<circle cx="' + x(point.timestamp).toFixed(1) + '" cy="' + y(point.count).toFixed(1) + '" r="5" fill="' + safe(series.color) + '"><title>' + safe(series.label) + ': ' + number(point.count) + ' events in UTC bucket</title></circle>').join('');
+    const yValues = [...new Set([0, Math.round(max / 2), max])].sort((a, b) => a - b);
+    const grid = yValues.map((value) => {
+      const position = y(value);
+      return '<line class="comparison-gridline" x1="' + left + '" y1="' + position.toFixed(1) + '" x2="' + (left + plotWidth) + '" y2="' + position.toFixed(1) + '"/><text class="comparison-tick" x="' + (left - 8) + '" y="' + (position + 4).toFixed(1) + '" text-anchor="end">' + number(value) + '</text>';
+    }).join('');
+    const sixHours = 6 * 60 * 60 * 1000;
+    const firstTick = Math.ceil(model.start / sixHours) * sixHours;
+    const xTicks = [];
+    for (let timestamp = firstTick; timestamp < model.end && xTicks.length < 9; timestamp += sixHours) xTicks.push(timestamp);
+    const timeLabels = xTicks.map((timestamp) => {
+      const position = x(timestamp);
+      const utc = new Date(timestamp).toISOString();
+      const labelText = utc.slice(5, 10) + ' ' + utc.slice(11, 13) + 'Z';
+      return '<line class="comparison-gridline comparison-gridline-vertical" x1="' + position.toFixed(1) + '" y1="' + top + '" x2="' + position.toFixed(1) + '" y2="' + (top + plotHeight) + '"/><text class="comparison-tick" x="' + position.toFixed(1) + '" y="' + (top + plotHeight + 18) + '" text-anchor="middle"><title>' + utc + ' UTC six-hour bucket</title>' + safe(labelText) + '</text>';
+    }).join('');
+    const plot = model.series.map((series, seriesIndex) => {
+      const color = comparisonLineColors[Math.max(0, choices.indexOf(series.choice)) % comparisonLineColors.length];
+      const points = series.points.map((point) => ({ x: x(point.timestamp), y: y(point.count), count: point.count, timestamp: point.timestamp }));
+      const line = points.length > 1 ? '<path class="comparison-series" d="' + comparisonCurvePath(points) + '" stroke="' + color + '"/>' : '';
+      const markers = points.map((point) => {
+        const labelX = point.x + (seriesIndex - 1) * 13;
+        const labelY = point.y + (seriesIndex - 1) * 10;
+        const bucket = new Date(point.timestamp).toISOString();
+        return '<circle class="comparison-point" data-count="' + point.count + '" data-bucket-start="' + bucket + '" cx="' + point.x.toFixed(1) + '" cy="' + point.y.toFixed(1) + '" r="4.5" fill="#111d30" stroke="' + color + '"><title>' + safe(series.label) + ': ' + number(point.count) + ' events in UTC bucket</title></circle><text class="comparison-count" x="' + labelX.toFixed(1) + '" y="' + labelY.toFixed(1) + '" text-anchor="middle">' + number(point.count) + '</text>';
+      }).join('');
       return line + markers;
-    }).join('') + '</svg>';
-    target.innerHTML = '<div class="comparison-legend" aria-label="' + safe(label) + ' chart legend">' + model.series.map((series) => '<span><i style="border-color:' + safe(series.color) + '"></i>' + safe(series.label) + '</span>').join('') + '</div><div class="comparison-chart-wrap">' + svg + '</div><p class="status">' + allPoints.length + ' visible UTC buckets</p>';
+    }).join('');
+    const svg = '<svg viewBox="0 0 560 230" role="img" aria-label="' + safe(label) + ' over UTC six-hour buckets; vertical axis is event count"><text class="comparison-axis-title" x="20" y="88" text-anchor="middle" transform="rotate(-90 20 88)">Events</text>' + grid + timeLabels + '<line class="comparison-axis" x1="' + left + '" y1="' + top + '" x2="' + left + '" y2="' + (top + plotHeight) + '"/><line class="comparison-axis" x1="' + left + '" y1="' + (top + plotHeight) + '" x2="' + (left + plotWidth) + '" y2="' + (top + plotHeight) + '"/>' + plot + '<text class="comparison-axis-title" x="' + (left + plotWidth / 2) + '" y="220" text-anchor="middle">UTC six-hour buckets</text></svg>';
+    target.innerHTML = '<div class="comparison-legend" aria-label="' + safe(label) + ' chart legend">' + model.series.map((series) => {
+      const color = comparisonLineColors[Math.max(0, choices.indexOf(series.choice)) % comparisonLineColors.length];
+      return '<span><i style="border-color:' + color + '"></i>' + safe(series.label) + '</span>';
+    }).join('') + '</div><div class="comparison-chart-wrap" role="region" tabindex="0" aria-label="' + safe(label) + ' line chart; horizontally scrollable on narrow screens">' + svg + '</div><p class="status">' + allPoints.length + ' visible UTC buckets</p>';
   }
   function renderComparisonCards(report) {
     const comparisons = report.comparisons || {};
