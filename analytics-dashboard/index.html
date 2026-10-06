@@ -114,6 +114,12 @@
     .incident { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:.5rem 1rem; padding:.85rem; border:1px solid var(--line); border-radius:.75rem; background:#0c1728; }
     .incident strong { color:#922b2b; }.incident p { margin:.15rem 0; }.incident-actions { display:flex; gap:.5rem; align-items:center; }.incident-actions button { min-width:8rem; }
     .event-table-wrap { overflow-x:auto; }
+    #recent-events { max-width:100%; max-height:24rem; overflow:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; scrollbar-color:var(--cyan) #142238; scrollbar-width:auto; }
+    #recent-events:focus-visible { outline:3px solid var(--cyan); outline-offset:2px; }
+    #recent-events::-webkit-scrollbar { width:.75rem; height:.75rem; }
+    #recent-events::-webkit-scrollbar-track { background:#142238; border-radius:999px; }
+    #recent-events::-webkit-scrollbar-thumb { background:var(--cyan); border:2px solid #142238; border-radius:999px; }
+    #recent-events thead th { position:sticky; top:0; z-index:1; background:#111d30; }
     .comparison-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:1rem; margin-top:1.5rem; }
     .comparison-grid .section { margin-top:0; }
     .comparison-note { margin:.35rem 0 0; color:var(--muted); font-size:.82rem; }
@@ -241,7 +247,7 @@
     <section class="card section"><h2>Recent system incidents</h2><p class="hint">Incident history is retained for 48 hours. Dashboard metrics continue to refresh every minute.</p><div id="incident-feed" class="incident-list"><div class="empty">No incidents recorded in the last 48 hours.</div></div></section>
     </div>
     <div id="panel-app-activity" class="dashboard-tabpanel" role="tabpanel" aria-labelledby="tab-app-activity" tabindex="0" hidden>
-    <section class="card section"><h2>Recent timestamped product activity</h2><div id="recent-events" class="event-table-wrap empty">No events recorded.</div></section>
+    <section class="card section"><h2>Recent timestamped product activity</h2><div id="recent-events" class="event-table-wrap empty" role="region" aria-label="Recent timestamped product activity" tabindex="0">No events recorded.</div></section>
     <section class="card section"><h2>How long answers take to appear</h2><p class="hint"><strong>Time until answer appears on phone:</strong> client-measured from answer submission until the parsed result is visible in its first rendered frame. This is separate from API request latency. Summaries use recorded observations in the API's 90-day retention; they do not prove continuous collection coverage.</p><p id="answer-display-coverage" class="telemetry-status">Timing coverage unavailable</p><div id="answer-display-summary-status" class="telemetry-status" role="status" aria-live="polite">Timing summaries unavailable</div><div id="answer-display-summaries" class="timing-summary-grid"></div><h3>Recent completed answers</h3><div id="answer-display-timings" class="event-table-wrap empty" aria-live="polite">No completed answer timings recorded.</div></section>
     </div>
     <div id="panel-overview" class="dashboard-tabpanel" role="tabpanel" aria-labelledby="tab-overview" tabindex="0">
