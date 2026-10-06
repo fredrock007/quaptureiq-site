@@ -114,12 +114,19 @@
     .incident { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:.5rem 1rem; padding:.85rem; border:1px solid var(--line); border-radius:.75rem; background:#0c1728; }
     .incident strong { color:#922b2b; }.incident p { margin:.15rem 0; }.incident-actions { display:flex; gap:.5rem; align-items:center; }.incident-actions button { min-width:8rem; }
     .event-table-wrap { overflow-x:auto; }
-    #recent-events { max-width:100%; max-height:24rem; overflow:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; scrollbar-color:var(--cyan) #142238; scrollbar-width:auto; }
+    #recent-events { max-width:100%; max-height:24rem; overflow-x:auto; overflow-y:hidden; scrollbar-color:var(--cyan) #142238; scrollbar-width:auto; }
     #recent-events:focus-visible { outline:3px solid var(--cyan); outline-offset:2px; }
     #recent-events::-webkit-scrollbar { width:.75rem; height:.75rem; }
     #recent-events::-webkit-scrollbar-track { background:#142238; border-radius:999px; }
     #recent-events::-webkit-scrollbar-thumb { background:var(--cyan); border:2px solid #142238; border-radius:999px; }
-    #recent-events thead th { position:sticky; top:0; z-index:1; background:#111d30; }
+    #recent-events table { min-width:36rem; border-collapse:separate; border-spacing:0; }
+    #recent-events tbody { display:block; max-height:20rem; overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; scrollbar-color:var(--cyan) #142238; scrollbar-width:auto; }
+    #recent-events tbody::-webkit-scrollbar { width:.75rem; }
+    #recent-events tbody::-webkit-scrollbar-track { background:#142238; border-radius:999px; }
+    #recent-events tbody::-webkit-scrollbar-thumb { background:var(--cyan); border:2px solid #142238; border-radius:999px; }
+    #recent-events thead, #recent-events tbody tr { display:table; width:100%; table-layout:fixed; }
+    #recent-events tbody:focus-visible { outline:3px solid var(--cyan); outline-offset:-3px; }
+    #recent-events thead th { background:#111d30; }
     .comparison-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:1rem; margin-top:1.5rem; }
     .comparison-grid .section { margin-top:0; }
     .comparison-note { margin:.35rem 0 0; color:var(--muted); font-size:.82rem; }
@@ -514,7 +521,7 @@
       target.innerHTML = '<div class="empty">No timestamped events recorded.</div>';
       return;
     }
-    target.innerHTML = '<table><thead><tr><th>Time (local)</th><th>Event</th><th>Mode</th><th>Detail</th></tr></thead><tbody>' +
+    target.innerHTML = '<table><thead><tr><th>Time (local)</th><th>Event</th><th>Mode</th><th>Detail</th></tr></thead><tbody tabindex="0" aria-label="Scrollable product activity rows">' +
       items.map((event) => {
         const detail = event.failure_stage ? 'Failure stage: ' + friendlyLabel(event.failure_stage)
           : event.duration_ms !== null ? number(event.duration_ms) + ' ms'
