@@ -584,11 +584,57 @@
     if (durationMs < 1000) return Math.round(durationMs) + ' ms';
     return (Math.round(durationMs / 10) / 100).toFixed(2) + ' s';
   }
+  function normalizeTimingPeriod(period) {
+    if (!period || typeof period !== 'object' || typeof period.observed !== 'boolean' ||
+        !Number.isInteger(period.total) || period.total < 0 ||
+        !period.by_mode || typeof period.by_mode !== 'object' || Array.isArray(period.by_mode)) {
+      return { state: 'malformed' };
+    }
+    const aggregate = { completed: 0, failed: 0, cancelled: 0, weightedDuration: 0, slowest: null };
+    for (const mode of Object.values(period.by_mode)) {
+      if (!mode || typeof mode !== 'object' ||
+          !Number.isInteger(mode.completed) || mode.completed < 0 ||
+          !Number.isInteger(mode.failed) || mode.failed < 0 ||
+          !Number.isInteger(mode.cancelled) || mode.cancelled < 0) {
+        return { state: 'malformed' };
+      }
+      if (mode.completed > 0 &&
+          (!Number.isFinite(mode.average_duration_ms) || mode.average_duration_ms < 0 ||
+           !Number.isFinite(mode.slowest_duration_ms) || mode.slowest_duration_ms < 0)) {
+        return { state: 'malformed' };
+      }
+      aggregate.completed += mode.completed;
+      aggregate.failed += mode.failed;
+      aggregate.cancelled += mode.cancelled;
+      if (mode.completed > 0) {
+        aggregate.weightedDuration += mode.average_duration_ms * mode.completed;
+        aggregate.slowest = aggregate.slowest === null
+          ? mode.slowest_duration_ms
+          : Math.max(aggregate.slowest, mode.slowest_duration_ms);
+      }
+    }
+    if (!period.observed) return { state: 'empty' };
+    return {
+      state: 'ready',
+      completed: aggregate.completed,
+      failed: aggregate.failed,
+      cancelled: aggregate.cancelled,
+      average_duration_ms: aggregate.completed > 0
+        ? aggregate.weightedDuration / aggregate.completed : null,
+      slowest_duration_ms: aggregate.slowest,
+    };
+  }
   function renderAnswerDisplaySummaries(status, summary) {
     const target = document.querySelector('#answer-display-summaries');
     const state = document.querySelector('#answer-display-summary-status');
     const coverage = document.querySelector('#answer-display-coverage');
-    if (!status || status.configured !== true) {
+    if (!status || typeof status.configured !== 'boolean') {
+      state.textContent = 'Phone-display timing contract is unavailable or unknown for this API.';
+      coverage.textContent = 'The API did not return timing configuration metadata.';
+      target.innerHTML = '';
+      return;
+    }
+    if (status.configured !== true) {
       state.textContent = 'Phone-display timing collection is disabled for this API.';
       coverage.textContent = 'No timing coverage is available.';
       target.innerHTML = '';
@@ -601,20 +647,37 @@
       return;
     }
     state.textContent = 'Recorded timing observations · retention ' + number(status.retention_days) + ' days';
-    coverage.textContent = summary.observed_from_at
-      ? 'Recorded timing data observed since ' + localTimestamp(summary.observed_from_at) + '. Gaps in collection are not inferred.'
-      : 'No timing events have been observed; collection coverage has not yet been established.';
     const periods = [
       ['today', 'Today (South Africa time)'],
       ['last_7_days', 'Last 7 days'],
       ['last_30_days', 'Last 30 days'],
     ];
+    const normalizedPeriods = Object.fromEntries(periods.map(([key]) =>
+      [key, normalizeTimingPeriod(summary.periods[key])]
+    ));
+    const hasMalformedPeriod = periods.some(([key]) => normalizedPeriods[key].state === 'malformed');
+    const hasObservedTiming = periods.some(([key]) => normalizedPeriods[key].state === 'ready');
+    if (hasMalformedPeriod) {
+      state.textContent = 'Phone-display timing summaries contain malformed data.';
+      coverage.textContent = 'One or more timing periods could not be safely interpreted.';
+    }
+    coverage.textContent = hasObservedTiming
+      ? (summary.observed_from_at
+        ? 'Recorded timing data observed since ' + localTimestamp(summary.observed_from_at) + '. Gaps in collection are not inferred.'
+        : 'Timing observations are available; the first-observation timestamp was not provided.')
+      : hasMalformedPeriod
+        ? 'One or more timing periods could not be safely interpreted.'
+        : 'No timing observations yet.';
+    if (!hasObservedTiming && !hasMalformedPeriod) {
+      state.textContent = 'No timing observations yet.';
+    }
     target.innerHTML = periods.map(([key, title]) => {
-      const item = summary.periods[key];
-      if (!item || !Number.isInteger(item.completed) || item.completed < 0 ||
-          !Number.isInteger(item.failed) || item.failed < 0 ||
-          !Number.isInteger(item.cancelled) || item.cancelled < 0) {
-        return '<article class="card timing-summary"><h3>' + title + '</h3><p>Summary unavailable</p></article>';
+      const item = normalizedPeriods[key];
+      if (item.state === 'malformed') {
+        return '<article class="card timing-summary"><h3>' + title + '</h3><p>Summary unavailable: malformed timing data.</p></article>';
+      }
+      if (item.state === 'empty') {
+        return '<article class="card timing-summary"><h3>' + title + '</h3><p>No timing observations yet.</p></article>';
       }
       const average = item.completed > 0 && Number.isFinite(item.average_duration_ms)
         ? answerDurationLabel(item.average_duration_ms) : '—';
@@ -999,7 +1062,7 @@
     if (!lastEventAt) {
       return entry.history_known === true
         ? { state: 'ready', label: 'Ready — waiting for the first event' }
-        : { state: 'unavailable', label: 'Unavailable — prior event history is unknown' };
+        : { state: 'awaiting-history', label: 'No events observed; prior history is unknown' };
     }
     if (!entry.last_received_at) {
       return { state: 'no-recent-data', label: 'No recent data — last received ' + localTimestamp(lastEventAt) };
