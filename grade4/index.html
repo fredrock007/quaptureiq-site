@@ -49,7 +49,7 @@
     .paper-checks span{width:18px;height:18px;display:grid;place-items:center;border-radius:5px;background:#0ca28f;color:#fff;font-size:.72rem}
     .sticker{position:absolute;display:grid;place-items:center;font-weight:950;border:3px solid var(--ink);box-shadow:4px 5px 0 #09242b}
     .sticker-a{background:#ffdb79;color:#152a35;left:2%;top:13%;width:80px;height:80px;border-radius:50%;transform:rotate(-14deg);font-size:1.7rem}
-    .sticker-b{background:#fd9a72;color:#152a35;right:1%;bottom:12%;width:98px;height:63px;border-radius:14px;transform:rotate(11deg);font-size:.94rem}
+    .sticker-b{background:#fd9a72;color:#152a35;right:0;bottom:12%;width:132px;height:63px;border-radius:14px;transform:rotate(11deg);font-size:.86rem;text-align:center}
     .mini-benefits{background:#fff;box-shadow:0 8px 25px #21352e0a;border-bottom:1px solid var(--line)}
     .benefits-row{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;padding:24px 0}
     .benefit{display:flex;align-items:center;gap:13px;font-size:.9rem;font-weight:750}
@@ -121,7 +121,7 @@
         <span class="eyebrow"><span aria-hidden="true"></span> Your free Grade 4 study corner</span>
         <h1>Small steps.<br><em>Big exam confidence.</em></h1>
         <p class="hero-copy">Past papers, study activities and marking memos for South African Grade 4 learners. Find a subject, choose a term and start practising together.</p>
-        <div class="hero-actions"><a class="btn btn-primary" href="#subjects">Explore subjects <span aria-hidden="true">↗</span></a><button class="btn btn-outline" id="share-btn" type="button">↗ Share this page</button></div>
+        <div class="hero-actions"><a class="btn btn-primary" href="#subjects">Explore subjects <span aria-hidden="true">&rarr;</span></a><button class="btn btn-outline" id="share-btn" type="button">Share this page</button></div>
       </div>
       <div class="hero-art" role="img" aria-label="Illustration of a Grade 4 practice worksheet with ticks and a gold A plus sticker">
         <div class="art-glow"></div><div class="page-back"></div>
@@ -154,7 +154,7 @@
           </div></div>
         </div>
       </div>
-      <div class="results-row"><span id="results-summary" role="status" aria-live="polite"></span><span class="help-text">Links open trusted resource pages in a new tab ↗</span></div>
+      <div class="results-row"><span id="results-summary" role="status" aria-live="polite"></span><span class="help-text">Links open trusted resource pages in a new tab</span></div>
       <div class="card-grid" id="subject-grid"></div>
       <div id="empty-state"><strong>Nothing found just yet 🔎</strong>Try another subject name or choose “All subjects”.</div>
     </section>
@@ -165,9 +165,9 @@
     </section>
 
     <section class="official" aria-labelledby="official-title"><span class="section-kicker">More places to learn</span><h2 id="official-title">Useful resource libraries</h2><p class="section-desc">Looking for extra worksheets, exemplars or curriculum guidance? These pages are handy starting points.</p><div class="official-links">
-      <a href="https://www.education.gov.za/Curriculum/NationalCurriculumStatementsGradesR-12/SBAExemplars/tabid/1868/ItemId/19582/Default.aspx" target="_blank" rel="noopener noreferrer" class="official-link">Department of Basic Education <span aria-hidden="true">↗</span></a>
-      <a href="https://wcedeportal.westerncape.gov.za/eresource/grade-4-assessment-pack" target="_blank" rel="noopener noreferrer" class="official-link">WCED Grade 4 Assessment Pack <span aria-hidden="true">↗</span></a>
-      <a href="https://studypapers.co.za/grade-4/" target="_blank" rel="noopener noreferrer" class="official-link">All Grade 4 Paper Collections <span aria-hidden="true">↗</span></a>
+      <a href="https://www.education.gov.za/Curriculum/NationalCurriculumStatementsGradesR-12/SBAExemplars/tabid/1868/ItemId/19582/Default.aspx" target="_blank" rel="noopener noreferrer" class="official-link">Department of Basic Education <span aria-hidden="true">&rarr;</span></a>
+      <a href="https://wcedeportal.westerncape.gov.za/eresource/grade-4-assessment-pack" target="_blank" rel="noopener noreferrer" class="official-link">WCED Grade 4 Assessment Pack <span aria-hidden="true">&rarr;</span></a>
+      <a href="https://studypapers.co.za/grade-4/" target="_blank" rel="noopener noreferrer" class="official-link">All Grade 4 Paper Collections <span aria-hidden="true">&rarr;</span></a>
     </div></section>
   </main>
 
@@ -205,7 +205,7 @@
       const note = term === 'all' ? 'Open papers, notes and memos where available' : hasTermLink ? `Go straight to the Term ${term} collection` : 'Open the collection to check available terms';
       const kind = subject.type==='core'?'Core subject':subject.type==='extra'?'Extra reading':'Language';
       const tags=subject.tags.map(t=>`<span>${escapeHtml(t)}</span>`).join('');
-      return `<article class="subject-card"><div class="card-top"><span class="subject-icon" style="--tile:${subject.color}" aria-hidden="true">${subject.icon}</span><span class="card-category">${kind}</span></div><h3>${escapeHtml(subject.name)}</h3><p>${escapeHtml(subject.desc)}</p><div class="subject-tags">${tags}</div><a class="card-link" href="${destination}" target="_blank" rel="noopener noreferrer" aria-label="${label} for ${escapeHtml(subject.name)}, opens in a new tab">${label}<span aria-hidden="true">↗</span></a><small class="card-note">${note}</small></article>`;
+      return `<article class="subject-card"><div class="card-top"><span class="subject-icon" style="--tile:${subject.color}" aria-hidden="true">${subject.icon}</span><span class="card-category">${kind}</span></div><h3>${escapeHtml(subject.name)}</h3><p>${escapeHtml(subject.desc)}</p><div class="subject-tags">${tags}</div><a class="card-link" href="${destination}" target="_blank" rel="noopener noreferrer" aria-label="${label} for ${escapeHtml(subject.name)}, opens in a new tab">${label}<span aria-hidden="true">&rarr;</span></a><small class="card-note">${note}</small></article>`;
     }
     function render(){
       const q = search.value.trim().toLowerCase();
@@ -227,7 +227,7 @@
     document.getElementById('share-btn').addEventListener('click',async()=>{
       const button=document.getElementById('share-btn');
       const info={title:'Grade 4 Paper Club',text:'Free South African Grade 4 papers and study resources for every subject 📚',url:location.href};
-      try {if(navigator.share){await navigator.share(info);return;}if(navigator.clipboard){await navigator.clipboard.writeText(location.href);button.textContent='✓ Link copied!';setTimeout(()=>button.textContent='↗ Share this page',2500);return;}}catch(e){if(e.name==='AbortError')return;}
+      try {if(navigator.share){await navigator.share(info);return;}if(navigator.clipboard){await navigator.clipboard.writeText(location.href);button.textContent='✓ Link copied!';setTimeout(()=>button.textContent='Share this page',2500);return;}}catch(e){if(e.name==='AbortError')return;}
       window.prompt('Copy this link to share:',location.href);
     });
     render();
