@@ -106,12 +106,34 @@
     .official-link{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:15px 17px;background:#fff;border:1px solid var(--line);border-radius:13px;text-decoration:none;font-weight:800;font-size:.84rem}
     .official-link:hover{border-color:var(--teal);color:var(--teal)}
     footer{background:#152a35;color:#d3e1df;padding:30px 0}
-    .copyright{border-top:1px solid #36505a;margin-top:22px;padding-top:18px;text-align:center;color:#b8d0cc;font-size:.8rem}
+    .copyright{border-top:1px solid #36505a;margin-top:22px;padding-top:18px;text-align:center;color:#ffdf88;font-size:.94rem;font-weight:850}
+    .listen-button{display:inline-flex;align-items:center;gap:11px;margin-top:18px;padding:8px 16px 8px 8px;max-width:100%;border:1px solid #668b87;background:#234c4b;color:#f1fff9;border-radius:50px;font-size:.83rem;font-weight:800;cursor:pointer;text-align:left}
+    .listen-button:hover{background:#30605b}.listen-button .play-circle{width:34px;height:34px;flex:0 0 34px;display:grid;place-items:center;background:var(--yellow);color:var(--ink);border-radius:50%;font-size:.85rem}
+    .quapture-panel{display:grid;grid-template-columns:1fr auto;align-items:center;gap:24px;margin-top:43px;padding:26px 30px;color:#fff;background:linear-gradient(125deg,#272052,#4b338a);border:1px solid #6047a5;border-radius:23px;box-shadow:0 18px 35px #2d20552c}
+    .quapture-panel .panel-kicker{font-weight:850;text-transform:uppercase;letter-spacing:.09em;color:#cbbeff;font-size:.72rem}
+    .quapture-panel h2{font-size:1.72rem;margin:6px 0 10px}.quapture-panel p{color:#e9e4fb;font-size:.91rem;max-width:650px;margin:0 0 14px}
+    .quapture-panel .panel-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+    .quapture-panel .panel-btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 15px;min-height:43px;text-decoration:none;font-size:.81rem;font-weight:900;border-radius:10px;background:#ffdb79;color:#26204a}
+    .quapture-panel .panel-link{color:white;font-size:.81rem;font-weight:750;text-underline-offset:3px}
+    .quapture-panel .brand-art{width:215px;max-width:100%;height:120px;object-fit:contain;filter:drop-shadow(0 5px 15px #11082a50)}
+    .tester-dialog{border:0;padding:0;width:min(520px,calc(100vw - 26px));max-height:min(90vh,750px);overflow:auto;color:#182c36;border-radius:21px;box-shadow:0 30px 100px #06122272;background:#fffaf3}
+    .tester-dialog::backdrop{background:#081a29b8;backdrop-filter:blur(4px)}
+    .tester-modal-inner{padding:27px;position:relative}
+    .tester-close{position:absolute;top:13px;right:13px;background:#f1eafa;border:0;border-radius:50%;width:37px;height:37px;display:grid;place-items:center;cursor:pointer;color:#483679;font-size:1.45rem}
+    .tester-logo-wrap{background:linear-gradient(120deg,#31265f,#573d9a);border-radius:15px;min-height:116px;display:grid;place-items:center;padding:14px 50px;margin:0 0 21px}
+    .tester-logo-wrap img{display:block;max-height:91px;max-width:100%;object-fit:contain}
+    .tester-tag{color:#6546aa;text-transform:uppercase;font-size:.74rem;font-weight:900;letter-spacing:.1em}
+    .tester-dialog h2{margin:9px 0 11px;font-size:clamp(1.55rem,4vw,2rem);line-height:1.14;letter-spacing:-.045em}
+    .tester-dialog p{color:#52626d;font-size:.9rem;margin:9px 0 14px}
+    .tester-dialog .tester-actions{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0 13px}
+    .tester-actions a{display:inline-flex;justify-content:center;align-items:center;min-height:45px;border-radius:11px;padding:11px 16px;font-size:.86rem;font-weight:900;text-decoration:none}
+    .tester-actions .apply{background:#50359b;color:white}.tester-actions .play-store{border:1px solid #bcb2d5;color:#50359b;background:#fff}
+    .tester-small{font-size:.77rem!important;color:#6f7883!important}.tester-email{font-weight:850;color:#4d3294;overflow-wrap:anywhere}
     .footer-row{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:center;font-size:.78rem}
     .footer-row strong{display:block;color:#fff;font-size:.93rem}
     @media(max-width:900px){.card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.hero-inner{min-height:430px}.hero-art{transform:scale(.85);transform-origin:center}}
     @media(max-width:680px){.container{width:min(100% - 30px,1140px)}.header-row{min-height:70px}.nav-side a:not(.nav-badge){display:none}.nav-badge{font-size:.71rem;padding:7px 9px}.brand{font-size:1rem}.hero-inner{display:block;padding:45px 0 55px}.hero-art{height:245px;transform:scale(.7);margin:-8px auto -36px}.hero-copy{font-size:.97rem}.hero-actions .btn{font-size:.85rem}.benefits-row{grid-template-columns:1fr;gap:15px;padding:20px 0}.benefit{font-size:.85rem}.benefit .i{height:40px;width:40px}.card-grid{grid-template-columns:1fr}.subject-card p{min-height:unset}.filter-bar{padding:15px}.filter-bottom{display:block}.filter-bottom>div+div{margin-top:15px}.pill{font-size:.76rem;padding:8px 12px}.tip-panel{grid-template-columns:1fr;padding:23px;margin-top:45px;gap:15px}.official-links{grid-template-columns:1fr}.results-row{display:block}.help-text{display:block;margin-top:3px}main{padding:48px 0 60px}}
-    @media(max-width:680px){.grade-tabs{justify-content:center}.grade-hint{display:none}.grade-tab{flex:1}}
+    @media(max-width:680px){.grade-tabs{justify-content:center}.grade-hint{display:none}.grade-tab{flex:1}.quapture-panel{grid-template-columns:1fr;padding:23px}.quapture-panel .brand-art{width:180px;height:70px;justify-self:center;order:-1}.tester-modal-inner{padding:20px}.tester-logo-wrap{min-height:92px;margin-bottom:14px}.tester-logo-wrap img{max-height:67px}.tester-actions a{flex:1}}
     @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
   </style>
 </head>
@@ -131,6 +153,7 @@
         <h1>Small steps.<br><em>Big exam confidence.</em></h1>
         <p class="hero-copy">Past papers, study activities and marking memos for South African Grade 4 learners. Find a subject, choose a term and start practising together.</p>
         <div class="hero-actions"><a class="btn btn-primary" href="#subjects">Explore subjects <span aria-hidden="true">&rarr;</span></a><button class="btn btn-outline" id="share-btn" type="button">Share this page</button></div>
+        <button class="listen-button" id="welcome-audio" type="button" aria-pressed="false" aria-label="Play the FredRock welcome message"><span class="play-circle" aria-hidden="true">▶</span><span class="audio-label">Listen to your FredRock welcome</span></button>
       </div>
       <div class="hero-art" role="img" aria-label="Illustration of a Grade 4 practice worksheet with ticks and a gold A plus sticker">
         <div class="art-glow"></div><div class="page-back"></div>
@@ -173,6 +196,11 @@
       <div class="steps"><div class="step"><span class="number">1</span>Choose the subject and term.</div><div class="step"><span class="number">2</span>Open the source page and download a PDF.</div><div class="step"><span class="number">3</span>Let your learner attempt it first.</div><div class="step"><span class="number">4</span>Check the memo if one is provided.</div></div>
     </section>
 
+    <section class="quapture-panel" aria-labelledby="quapture-title">
+      <div><span class="panel-kicker">From FredRock · QuaptureIQ closed testing</span><h2 id="quapture-title">Help us shape a smarter way to learn.</h2><p>QuaptureIQ lets learners photograph a question and receive an answer with an explanation. We're inviting <strong>teachers, students and parents</strong> to test the app and share feedback that will help us improve it.</p><div class="panel-actions"><a class="panel-btn" href="mailto:quaptureiq.reviewer@gmail.com?subject=QuaptureIQ%20tester%20interest&body=Hello%2C%20I%20would%20like%20to%20test%20QuaptureIQ.%20My%20Gmail%20address%20is%3A%20">Become a tester →</a><a class="panel-link" href="https://play.google.com/store/apps/details?id=com.quaptureiq.app" target="_blank" rel="noopener noreferrer">View on Google Play ↗</a></div></div>
+      <img class="brand-art" src="../assets/quaptureiq-logo.webp" alt="QuaptureIQ official logo" loading="lazy" width="215" height="120">
+    </section>
+
     <section class="official" aria-labelledby="official-title"><span class="section-kicker">More places to learn</span><h2 id="official-title">Useful resource libraries</h2><p class="section-desc">Looking for extra worksheets, exemplars or curriculum guidance? These pages are handy starting points.</p><div class="official-links">
       <a href="https://www.education.gov.za/Curriculum/NationalCurriculumStatementsGradesR-12/SBAExemplars/tabid/1868/ItemId/19582/Default.aspx" target="_blank" rel="noopener noreferrer" class="official-link">Department of Basic Education <span aria-hidden="true">&rarr;</span></a>
       <a href="https://wcedeportal.westerncape.gov.za/eresource/grade-4-assessment-pack" target="_blank" rel="noopener noreferrer" class="official-link">WCED Grade 4 Assessment Pack <span aria-hidden="true">&rarr;</span></a>
@@ -181,6 +209,18 @@
   </main>
 
   <footer><div class="container footer-row"><div><strong>Grade 4 Paper Club 📚</strong>Made to make schoolwork a little less stressful.</div><div>Free resource directory • South African CAPS<br>Links lead to third-party sites; PDF availability may change.</div></div><div class="container copyright">© 2026 FredRock. All rights reserved.</div></footer>
+  <dialog class="tester-dialog" id="tester-dialog" aria-labelledby="tester-title" aria-describedby="tester-description">
+    <div class="tester-modal-inner">
+      <button type="button" class="tester-close" id="tester-close" aria-label="Close tester invitation">×</button>
+      <div class="tester-logo-wrap"><img src="../assets/quaptureiq-logo.webp" alt="QuaptureIQ" width="300" height="94"></div>
+      <span class="tester-tag">Teachers, students and parents wanted</span>
+      <h2 id="tester-title">What if a photo could help you understand a question?</h2>
+      <p id="tester-description">QuaptureIQ is an educational app that can analyse a photograph of a question and provide an answer with an explanation. We're looking for volunteers to help test it and improve the learning experience.</p>
+      <p><strong>Interested?</strong> Email <a class="tester-email" href="mailto:quaptureiq.reviewer@gmail.com?subject=QuaptureIQ%20tester%20interest">quaptureiq.reviewer@gmail.com</a> and include the Gmail address you'd like added to closed testing.</p>
+      <div class="tester-actions"><a class="apply" href="mailto:quaptureiq.reviewer@gmail.com?subject=QuaptureIQ%20tester%20interest&body=Hello%2C%20I%20would%20like%20to%20test%20QuaptureIQ.%20My%20Gmail%20address%20is%3A%20">Email to volunteer</a><a class="play-store" href="https://play.google.com/store/apps/details?id=com.quaptureiq.app" target="_blank" rel="noopener noreferrer">Google Play ↗</a></div>
+      <p class="tester-small">QuaptureIQ is currently in closed testing. Google Play access is available after your Gmail address has been added to the tester list. This invitation appears only once per browsing session.</p>
+    </div>
+  </dialog>
   <script>
     // Each URL points to an actual Grade 4 subject collection on Study Papers.
     // No third-party PDFs are rehosted here.
@@ -239,6 +279,50 @@
       try {if(navigator.share){await navigator.share(info);return;}if(navigator.clipboard){await navigator.clipboard.writeText(location.href);button.textContent='✓ Link copied!';setTimeout(()=>button.textContent='Share this page',2500);return;}}catch(e){if(e.name==='AbortError')return;}
       window.prompt('Copy this link to share:',location.href);
     });
+    const narrationButton=document.getElementById('welcome-audio');
+    const narrationLabel=narrationButton.querySelector('.audio-label');
+    const narrationIcon=narrationButton.querySelector('.play-circle');
+    const speech=window.speechSynthesis;
+    let speaking=false;
+    function resetNarration(){
+      speaking=false;
+      narrationButton.setAttribute('aria-pressed','false');
+      narrationButton.setAttribute('aria-label','Play the FredRock welcome message');
+      narrationLabel.textContent='Listen to your FredRock welcome';
+      narrationIcon.textContent='▶';
+    }
+    narrationButton.addEventListener('click',()=>{
+      if(!speech || typeof SpeechSynthesisUtterance==='undefined'){
+        narrationLabel.textContent='Audio is unavailable in this browser';
+        return;
+      }
+      if(speaking){speech.cancel();resetNarration();return;}
+      speech.cancel();
+      const utterance=new SpeechSynthesisUtterance('Welcome to Grade 4 Paper Club, brought to you by FredRock. Explore free South African learning materials, choose your subjects, and practise with confidence. Good luck and happy learning!');
+      utterance.lang='en-ZA';
+      utterance.rate=.95;
+      const voices=speech.getVoices();
+      utterance.voice=voices.find(v=>v.lang.toLowerCase()==='en-za')||voices.find(v=>v.lang.toLowerCase()==='en-gb')||voices.find(v=>v.lang.toLowerCase().startsWith('en'))||null;
+      utterance.onend=resetNarration;
+      utterance.onerror=resetNarration;
+      speaking=true;
+      narrationButton.setAttribute('aria-pressed','true');
+      narrationButton.setAttribute('aria-label','Stop FredRock welcome message');
+      narrationLabel.textContent='Stop welcome audio';
+      narrationIcon.textContent='■';
+      speech.speak(utterance);
+    });
+    window.addEventListener('pagehide',()=>{if(speech)speech.cancel();});
+    const testerDialog=document.getElementById('tester-dialog');
+    const dismissalKey='fredrock_quapture_testers_dismissed';
+    const isDismissed=()=>{try{return sessionStorage.getItem(dismissalKey)==='yes';}catch{return false;}};
+    const rememberDismissal=()=>{try{sessionStorage.setItem(dismissalKey,'yes');}catch{}};
+    document.getElementById('tester-close').addEventListener('click',()=>testerDialog.close());
+    testerDialog.addEventListener('close',rememberDismissal);
+    testerDialog.querySelectorAll('.tester-actions a').forEach(a=>a.addEventListener('click',()=>testerDialog.close()));
+    window.setTimeout(()=>{
+      if(!isDismissed()&&!testerDialog.open&&typeof testerDialog.showModal==='function'&&document.visibilityState==='visible')testerDialog.showModal();
+    },5000);
     render();
   </script>
 </body>
